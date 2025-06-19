@@ -27,9 +27,7 @@
             font-family: 'Pacifico', cursive;
         }
 
-        /* Este es un truco para que el texto se lea bien sobre la imagen de fondo.
-           Crea una capa semitransparente. Puedes cambiar el color y la opacidad.
-        */
+        /* Capa semitransparente para mejorar la legibilidad del texto */
         .content-overlay {
             background-color: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(5px); /* Opcional: Esto desenfoca un poco el fondo */
@@ -42,19 +40,22 @@
 
     <div class="min-h-screen w-full flex items-center justify-center p-4">
 
-        <!-- Contenedor principal con la capa semitransparente -->
-        <div class="content-overlay w-full max-w-4xl text-center p-6 md:p-12">
+        <!-- Contenedor principal optimizado para móviles -->
+        <div class="content-overlay w-full max-w-md text-center p-8">
 
             <div>
-                <img src="https://placehold.co/150x150/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
+                <!-- El tamaño del ícono es adecuado para móviles -->
+                <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
             </div>
 
             <header class="mb-8">
-                <h1 class="text-5xl md:text-7xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
-                <p class="text-gray-600 mt-4 text-lg font-medium">¡Gracias por venir! Ayudame a guardar todos los recuerdos.</p>
+                <!-- Se ajusta el tamaño del título para que no sea excesivo en pantallas pequeñas -->
+                <h1 class="text-5xl sm:text-6xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
+                <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Gracias por venir! Ayudame a guardar todos los recuerdos.</p>
             </header>
             
-            <div class="flex flex-col md:flex-row justify-center items-center gap-4 my-8 w-full max-w-md mx-auto">
+            <!-- Los botones ya se apilan verticalmente en móviles, lo cual es ideal -->
+            <div class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
                 
                 <a href="https://photos.app.goo.gl/mbFHZawFqhtrftmy9" target="_blank" class="w-full text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
                     📸 Subí tus fotos y videos
@@ -74,3 +75,32 @@
     </div>
 </body>
 </html>
+```
+
+### 2. Tamaño Recomendado para las Imágenes
+
+Para que la página cargue rápido y se vea genial en celulares, es clave usar imágenes del tamaño correcto.
+
+
+### Guía Rápida de Imágenes para tu Página Web Móvil
+
+Optimizar las imágenes es crucial para que la página cargue rápido y no consuma muchos datos de tus invitados.
+
+#### 1. Imagen de Fondo
+
+Es la imagen más grande y la más importante de optimizar.
+
+* **Resolución Ideal:** Piensa en formato vertical. Una resolución de **1080 píxeles de ancho por 1920 píxeles de alto** es perfecta. Esto cubre la mayoría de las pantallas de celulares modernos sin ser excesivamente grande.
+* **Peso del Archivo:** ¡Intenta que pese menos de **400 KB**! Un archivo más grande hará que la página cargue muy lento.
+* **Formato:** Usa `.JPEG` para fotografías. Si quieres la mejor compresión, puedes usar formatos como `.WEBP`.
+* **Herramientas para Comprimir:** Antes de usar una imagen, pásala por una herramienta online gratuita como [**TinyPNG**](https://tinypng.com/) o [**Squoosh**](https://squoosh.app/). Reducen el peso del archivo sin que se note la pérdida de calidad.
+
+#### 2. Ícono de la Fiesta (el círculo con el emoji 🥳)
+
+Esta imagen es mucho más pequeña, por lo que es más fácil de manejar.
+
+* **Resolución Ideal:** Un tamaño de **300x300 píxeles** es más que suficiente. Aunque en la página se vea más pequeño, esta resolución asegura que se vea nítido en todas las pantallas.
+* **Peso del Archivo:** Debería pesar menos de **50 KB**.
+* **Formato:** `.PNG` si quieres que el fondo sea transparente, o `.JPEG` si es una foto cuadrada.
+
+Siguiendo estas recomendaciones, te aseguras de que la página no solo se vea bien, sino que también funcione de manera rápida y eficiente para todos tus invitad
