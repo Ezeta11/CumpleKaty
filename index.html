@@ -4,103 +4,217 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Cumpleaños - Katy</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Pacifico for the title -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- PERSONALIZACIÓN DEL FONDO --- */
         body {
-            /* INSTRUCCIÓN: Puedes cambiar este enlace por el de otra imagen de fondo.
-               Busca en sitios como pexels.com o unsplash.com.
-            */
             background-image: url('https://images.pexels.com/photos/2263436/pexels-photo-2263436.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
-            background-size: cover; /* Hace que la imagen cubra toda la pantalla */
-            background-position: center; /* Centra la imagen */
-            background-attachment: fixed; /* Mantiene el fondo quieto al hacer scroll */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             font-family: 'Inter', sans-serif;
         }
-
-        .font-pacifico {
-            font-family: 'Pacifico', cursive;
-        }
-
-        /* Capa semitransparente para mejorar la legibilidad del texto */
+        .font-pacifico { font-family: 'Pacifico', cursive; }
         .content-overlay {
             background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(5px); /* Opcional: Esto desenfoca un poco el fondo */
-            border-radius: 1.5rem; /* Bordes redondeados para el contenedor */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra suave */
+            backdrop-filter: blur(5px);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
+        /* Estilo para el modal de visualización de imagen */
+        #imageModal { display: none; }
+        #imageModal.flex { display: flex; }
     </style>
 </head>
 <body class="text-gray-800">
 
     <div class="min-h-screen w-full flex items-center justify-center p-4">
-
-        <!-- Contenedor principal optimizado para móviles -->
         <div class="content-overlay w-full max-w-md text-center p-8">
-
-            <div>
-                <!-- El tamaño del ícono es adecuado para móviles -->
-                <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
-            </div>
-
-            <header class="mb-8">
-                <!-- Se ajusta el tamaño del título para que no sea excesivo en pantallas pequeñas -->
+            <!-- Sección del Título -->
+            <header id="mainHeader">
+                <div>
+                    <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
+                </div>
                 <h1 class="text-5xl sm:text-6xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
-                <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Gracias por venir! Ayudame a guardar todos los recuerdos.</p>
+                <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
             </header>
             
-            <!-- Los botones ya se apilan verticalmente en móviles, lo cual es ideal -->
-            <div class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
-                
-                <a href="https://photos.app.goo.gl/mbFHZawFqhtrftmy9" target="_blank" class="w-full text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
-                    📸 Subí tus fotos y videos
-                </a>
-                
-                <a href="https://photos.app.goo.gl/mbFHZawFqhtrftmy9" target="_blank" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
-                    🖼️ Ver la galería
-                </a>
+            <!-- Botones Principales -->
+            <div id="actionButtons" class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
+                <button id="showUploadBtn" class="w-full text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">📸 Subir fotos y videos</button>
+                <button id="showGalleryBtn" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver la galería</button>
             </div>
             
-            <footer class="mt-12 text-gray-500 text-sm">
-                <p>Al hacer clic serás redirigido a Google Fotos.</p>
-            </footer>
-
+            <!-- Sección para Subir Archivos (oculta) -->
+            <section id="uploadSection" class="hidden">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Sube tus recuerdos</h2>
+                <input type="file" id="fileInput" multiple accept="image/*,video/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 mb-4"/>
+                <button id="uploadBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">Confirmar y Subir</button>
+                <div id="uploadProgress" class="hidden mt-4 w-full bg-gray-200 rounded-full h-2.5"><div id="progressBar" class="bg-pink-500 h-2.5 rounded-full" style="width: 0%"></div></div>
+                <p id="uploadStatus" class="mt-2 text-sm text-gray-600"></p>
+                <button class="back-btn mt-4 text-pink-500 hover:underline">← Volver</button>
+            </section>
+            
+            <!-- Sección de la Galería (oculta) -->
+            <section id="gallerySection" class="hidden">
+                <h2 class="text-3xl font-bold text-gray-700 mb-6">Galería de Recuerdos</h2>
+                <div id="galleryGrid" class="grid grid-cols-3 gap-2"></div>
+                <p id="loadingMessage" class="text-gray-500 mt-8">Cargando...</p>
+                <button class="back-btn mt-6 text-pink-500 hover:underline">← Volver</button>
+            </section>
         </div>
-
     </div>
+    
+    <!-- Modal para ver imagen/video en grande -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
+        <div class="relative max-w-3xl max-h-full">
+            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg">&times;</button>
+            <img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src="">
+            <video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video>
+        </div>
+    </div>
+
+    <!-- Módulo de Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // INSTRUCCIÓN IMPORTANTE:
+        // Pega aquí la configuración de tu proyecto de Firebase.
+        const firebaseConfig = {const firebaseConfig = {
+  apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+  authDomain: "cumplekaty.firebaseapp.com",
+  projectId: "cumplekaty",
+  storageBucket: "cumplekaty.firebasestorage.app",
+  messagingSenderId: "139981760540",
+  appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
+};
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // --- MANEJO DE VISTAS ---
+        const mainHeader = document.getElementById('mainHeader');
+        const actionButtons = document.getElementById('actionButtons');
+        const uploadSection = document.getElementById('uploadSection');
+        const gallerySection = document.getElementById('gallerySection');
+        const backBtns = document.querySelectorAll('.back-btn');
+        
+        document.getElementById('showUploadBtn').addEventListener('click', () => showView(uploadSection));
+        document.getElementById('showGalleryBtn').addEventListener('click', () => {
+            showView(gallerySection);
+            loadMedia();
+        });
+        backBtns.forEach(btn => btn.addEventListener('click', () => showView(actionButtons)));
+
+        function showView(viewToShow) {
+            mainHeader.classList.toggle('hidden', viewToShow !== actionButtons);
+            actionButtons.classList.toggle('hidden', viewToShow !== actionButtons);
+            uploadSection.classList.add('hidden');
+            gallerySection.classList.add('hidden');
+            if (viewToShow !== actionButtons) viewToShow.classList.remove('hidden');
+        }
+
+        // --- LÓGICA DE SUBIDA ---
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressBar = document.getElementById('progressBar');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        uploadBtn.addEventListener('click', () => {
+            if (fileInput.files.length === 0) {
+                uploadStatus.textContent = 'Por favor, selecciona al menos un archivo.';
+                return;
+            }
+            uploadProgress.classList.remove('hidden');
+            uploadStatus.textContent = '';
+            let uploadedCount = 0;
+            
+            Array.from(fileInput.files).forEach(file => {
+                const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.style.width = progress + '%';
+                    },
+                    (error) => {
+                        uploadStatus.textContent = `Error al subir ${file.name}.`;
+                    },
+                    () => {
+                        uploadedCount++;
+                        if (uploadedCount === fileInput.files.length) {
+                            uploadStatus.textContent = '¡Archivos subidos con éxito!';
+                            fileInput.value = '';
+                            setTimeout(() => {
+                                uploadProgress.classList.add('hidden');
+                                uploadStatus.textContent = '';
+                            }, 3000);
+                        }
+                    }
+                );
+            });
+        });
+
+        // --- LÓGICA DE GALERÍA Y MODAL ---
+        const galleryGrid = document.getElementById('galleryGrid');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
+        const closeModal = document.getElementById('closeModal');
+
+        async function loadMedia() {
+            galleryGrid.innerHTML = '';
+            loadingMessage.classList.remove('hidden');
+            loadingMessage.textContent = 'Cargando recuerdos... ✨';
+            
+            try {
+                const listRef = ref(storage, 'media/');
+                const res = await listAll(listRef);
+                if (res.items.length === 0) {
+                    loadingMessage.textContent = 'Aún no hay fotos. ¡Sé el primero en subir!';
+                    return;
+                }
+                const sortedItems = res.items.sort((a, b) => b.name.localeCompare(a.name));
+                for(const itemRef of sortedItems) {
+                    const url = await getDownloadURL(itemRef);
+                    const isVideo = itemRef.name.match(/\.(mp4|mov|webm|ogg)$/i);
+                    const thumb = document.createElement(isVideo ? 'video' : 'img');
+                    thumb.src = url + (isVideo ? '#t=0.1' : ''); // Preview para video
+                    thumb.className = "w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity";
+                    thumb.addEventListener('click', () => openModal(url, isVideo));
+                    galleryGrid.appendChild(thumb);
+                }
+                loadingMessage.classList.add('hidden');
+            } catch (error) {
+                loadingMessage.textContent = 'No se pudieron cargar los archivos.';
+                console.error("Error loading media:", error);
+            }
+        }
+        
+        function openModal(url, isVideo) {
+            if(isVideo) {
+                modalVideo.src = url;
+                modalVideo.classList.remove('hidden');
+                modalImage.classList.add('hidden');
+            } else {
+                modalImage.src = url;
+                modalImage.classList.remove('hidden');
+                modalVideo.classList.add('hidden');
+            }
+            imageModal.classList.add('flex');
+        }
+        
+        closeModal.addEventListener('click', () => {
+            imageModal.classList.remove('flex');
+            modalVideo.pause();
+            modalVideo.src = '';
+        });
+    </script>
 </body>
 </html>
-```
-
-### 2. Tamaño Recomendado para las Imágenes
-
-Para que la página cargue rápido y se vea genial en celulares, es clave usar imágenes del tamaño correcto.
-
-
-### Guía Rápida de Imágenes para tu Página Web Móvil
-
-Optimizar las imágenes es crucial para que la página cargue rápido y no consuma muchos datos de tus invitados.
-
-#### 1. Imagen de Fondo
-
-Es la imagen más grande y la más importante de optimizar.
-
-* **Resolución Ideal:** Piensa en formato vertical. Una resolución de **1080 píxeles de ancho por 1920 píxeles de alto** es perfecta. Esto cubre la mayoría de las pantallas de celulares modernos sin ser excesivamente grande.
-* **Peso del Archivo:** ¡Intenta que pese menos de **400 KB**! Un archivo más grande hará que la página cargue muy lento.
-* **Formato:** Usa `.JPEG` para fotografías. Si quieres la mejor compresión, puedes usar formatos como `.WEBP`.
-* **Herramientas para Comprimir:** Antes de usar una imagen, pásala por una herramienta online gratuita como [**TinyPNG**](https://tinypng.com/) o [**Squoosh**](https://squoosh.app/). Reducen el peso del archivo sin que se note la pérdida de calidad.
-
-#### 2. Ícono de la Fiesta (el círculo con el emoji 🥳)
-
-Esta imagen es mucho más pequeña, por lo que es más fácil de manejar.
-
-* **Resolución Ideal:** Un tamaño de **300x300 píxeles** es más que suficiente. Aunque en la página se vea más pequeño, esta resolución asegura que se vea nítido en todas las pantallas.
-* **Peso del Archivo:** Debería pesar menos de **50 KB**.
-* **Formato:** `.PNG` si quieres que el fondo sea transparente, o `.JPEG` si es una foto cuadrada.
-
-Siguiendo estas recomendaciones, te aseguras de que la página no solo se vea bien, sino que también funcione de manera rápida y eficiente para todos tus invitad
