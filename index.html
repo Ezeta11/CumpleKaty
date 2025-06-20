@@ -53,7 +53,7 @@
                     <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
                     <label for="fileInput" class="h-full flex items-center justify-center cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-transform duration-300 animate-pulse-button">📸 Subir</label>
                     <button id="showGalleryBtn" class="h-full flex items-center justify-center text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.2s;">🖼️ Ver Galería</button>
-                    <button id="showVoteBtn" class="h-full flex items-center justify-center text-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.4s;">😂 Votar</button>
+                    <button id="showVoteBtn" class="h-full flex items-center justify-center text-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.4s;">� Votar</button>
                     <button id="showRankingBtn" class="h-full flex items-center justify-center text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.6s;">🏆 Ranking</button>
                 </div>
 
@@ -82,8 +82,10 @@
             </section>
 
             <section id="rankingSection" class="hidden">
-                <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Top 10 - Más Votadas</h2>
-                <div id="rankingList" class="space-y-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
+                <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Podio de Ganadores</h2>
+                <div id="podiumContainer" class="flex items-end justify-center gap-4 h-80">
+                    <!-- El Podio se genera aquí con JavaScript -->
+                </div>
                 <p id="rankingLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
                 <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
             </section>
@@ -98,13 +100,19 @@
     </div>
 
     <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
-        <div class="relative max-w-3xl max-h-full"><button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button><img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src=""><video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video></div>
+        <div class="relative max-w-3xl max-h-full">
+            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button>
+            <a id="downloadBtn" href="#" download="recuerdo-katy.jpg" class="hidden absolute -top-2 right-12 text-white bg-green-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10" title="Descargar foto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </a>
+            <img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src=""><video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
@@ -269,29 +277,22 @@
             if(selectedPhotos.length !== 3) return;
             confirmVoteBtn.disabled = true;
             confirmVoteBtn.textContent = 'Procesando...';
-            
             try {
-                // ¡CORRECCIÓN! Se reestructura la transacción para cumplir la regla de "lecturas primero".
                 await runTransaction(db, async (transaction) => {
-                    // 1. FASE DE LECTURA: Lee todos los documentos primero.
                     const userDoc = await transaction.get(userRef);
-                    const statsRef = doc(db, "stats", "tally");
-                    const statsDoc = await transaction.get(statsRef);
-                    
-                    const photoRefs = selectedPhotos.map(id => doc(db, "photos", id));
-                    const photoDocs = await Promise.all(photoRefs.map(ref => transaction.get(ref)));
-
-                    // 2. FASE DE VALIDACIÓN: Revisa las condiciones después de leer.
                     if (!userDoc.exists() || userDoc.data().hasVoted) {
                         throw new Error("El usuario ya ha votado.");
                     }
+                    const statsRef = doc(db, "stats", "tally");
+                    const statsDoc = await transaction.get(statsRef);
+                    const photoRefs = selectedPhotos.map(id => doc(db, "photos", id));
+                    const photoDocs = await Promise.all(photoRefs.map(ref => transaction.get(ref)));
+
                     for (const photoDoc of photoDocs) {
                         if (!photoDoc.exists()) {
                             throw new Error(`Una de las fotos seleccionadas no existe.`);
                         }
                     }
-
-                    // 3. FASE DE ESCRITURA: Ahora realiza todas las actualizaciones.
                     const newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
                     transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
 
@@ -346,39 +347,84 @@
             loadingMsg.classList.add('hidden');
         }
         async function loadRanking() {
-            const rankingList = document.getElementById('rankingList');
+            const podiumContainer = document.getElementById('podiumContainer');
             const loadingMsg = document.getElementById('rankingLoadingMessage');
-            rankingList.innerHTML = '';
-            loadingMsg.textContent = 'Calculando ranking... 📊';
+            podiumContainer.innerHTML = '';
+            loadingMsg.textContent = 'Calculando el podio... 📊';
             loadingMsg.classList.remove('hidden');
+            
             const statsRef = doc(db, "stats", "tally");
             const statsSnap = await getDoc(statsRef);
             const totalVotes = statsSnap.exists() ? statsSnap.data().totalVotes : 1;
-            const q = query(collection(db, "photos"), orderBy("votes", "desc"), limit(10));
+            
+            const q = query(collection(db, "photos"), orderBy("votes", "desc"), limit(3));
             const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) { loadingMsg.textContent = 'Nadie ha votado todavía.'; return; }
-            const medals = ['🥇', '🥈', '🥉'];
-            for (const [index, photoDoc] of querySnapshot.docs.entries()) {
-                const photoData = photoDoc.data();
-                if (photoData.votes === 0) continue;
-                const url = await getDownloadURL(ref(storage, photoData.storagePath));
-                const percentage = totalVotes > 0 ? ((photoData.votes / totalVotes) * 100).toFixed(1) : 0;
-                const item = document.createElement('div');
-                item.className = 'flex items-center gap-4 p-2 rounded-lg bg-white bg-opacity-50';
-                const medal = index < 3 ? medals[index] : `<span class="font-bold w-6 text-center">${index + 1}</span>`;
-                item.innerHTML = `<div class="text-2xl w-8 text-center">${medal}</div><img src="${url}" class="w-16 h-16 object-cover rounded-md shadow-md"><div class="flex-grow"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-pink-400 h-4 rounded-full text-xs font-medium text-white text-center leading-none" style="width: ${percentage}%">${percentage}%</div></div></div>`;
-                rankingList.appendChild(item);
+            
+            if (querySnapshot.empty || querySnapshot.docs.every(d => d.data().votes === 0)) {
+                loadingMsg.textContent = 'Nadie ha votado todavía.';
+                return;
             }
+
+            const winners = [];
+            for (const photoDoc of querySnapshot.docs) {
+                 if (photoDoc.data().votes > 0) {
+                    const url = await getDownloadURL(ref(storage, photoDoc.data().storagePath));
+                    winners.push({ ...photoDoc.data(), url });
+                }
+            }
+            
+            const podiumOrder = [1, 0, 2];
+            const podiumData = [
+                { medal: '🥈', height: 'h-48' },
+                { medal: '🥇', height: 'h-64' },
+                { medal: '🥉', height: 'h-40' }
+            ];
+
+            podiumOrder.forEach((winnerIndex, podiumIndex) => {
+                const winner = winners[winnerIndex];
+                if (winner) {
+                    const data = podiumData[podiumIndex];
+                    const percentage = totalVotes > 0 ? ((winner.votes / totalVotes) * 100).toFixed(1) : "0.0";
+                    const placeEl = document.createElement('div');
+                    placeEl.className = `w-1/3 flex flex-col items-center justify-end ${data.height}`;
+                    placeEl.innerHTML = `
+                        <div class="text-4xl">${data.medal}</div>
+                        <img src="${winner.url}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-full border-4 border-white shadow-lg my-2">
+                        <div class="font-bold text-md sm:text-lg">${winner.votes} Votos</div>
+                        <div class="text-xs sm:text-sm text-gray-600">${percentage}%</div>
+                    `;
+                    podiumContainer.appendChild(placeEl);
+                } else {
+                     const placeholder = document.createElement('div');
+                     placeholder.className = 'w-1/3';
+                     podiumContainer.appendChild(placeholder);
+                }
+            });
+
             loadingMsg.classList.add('hidden');
         }
         const imageModal = document.getElementById('imageModal');
         const closeModal = document.getElementById('closeModal');
         const modalImage = document.getElementById('modalImage');
         const modalVideo = document.getElementById('modalVideo');
+        const downloadBtn = document.getElementById('downloadBtn');
+
         closeModal.addEventListener('click', () => { imageModal.classList.remove('flex'); modalVideo.pause(); });
         function openModal(url, isVideo) {
-            if(isVideo) { modalVideo.src = url; modalVideo.classList.remove('hidden'); modalImage.classList.add('hidden'); modalVideo.play(); } 
-            else { modalImage.src = url; modalImage.classList.remove('hidden'); modalVideo.classList.add('hidden'); }
+            if(isVideo) { 
+                modalVideo.src = url; 
+                modalVideo.classList.remove('hidden'); 
+                modalImage.classList.add('hidden');
+                downloadBtn.classList.add('hidden');
+                modalVideo.play(); 
+            } 
+            else { 
+                modalImage.src = url; 
+                modalImage.classList.remove('hidden'); 
+                modalVideo.classList.add('hidden'); 
+                downloadBtn.href = url;
+                downloadBtn.classList.remove('hidden');
+            }
             imageModal.classList.add('flex');
         }
         const confettiContainer = document.getElementById('confetti-container');
@@ -394,3 +440,4 @@
     </script>
 </body>
 </html>
+�
