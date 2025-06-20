@@ -22,6 +22,8 @@
         }
         .modal { display: none; }
         .modal.flex { display: flex; }
+        .photo-selected { border: 4px solid #a855f7; box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+        .photo-selected .checkmark { display: block; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         .animate-pulse-button { animation: pulse 2.5s infinite; }
@@ -40,7 +42,6 @@
     <div class="min-h-screen w-full flex items-center justify-center p-4">
         <div class="content-overlay w-full max-w-md text-center p-6 sm:p-8">
 
-            <!-- VISTA PRINCIPAL -->
             <div id="mainView">
                 <header>
                     <div><img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white"></div>
@@ -48,7 +49,6 @@
                     <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
                 </header>
                 
-                <!-- Contenedor de botones en 2x2 -->
                 <div class="grid grid-cols-2 gap-4 my-8 w-full max-w-sm mx-auto">
                     <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
                     <label for="fileInput" class="h-full flex items-center justify-center cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-transform duration-300 animate-pulse-button">📸 Subir</label>
@@ -58,12 +58,11 @@
                 </div>
 
                 <div id="uploadProgressContainer" class="hidden mt-4 w-full max-w-sm mx-auto">
-                    <p id="uploadStatus" class="mb-2 text-sm font-semibold"></p>
+                    <p id="uploadStatus" class="mb-2 text-sm font-semibold">Subiendo tus recuerdos...</p>
                     <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="progressBar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div></div>
                 </div>
             </div>
             
-            <!-- VISTA DE GALERÍA (SOLO VER) -->
             <section id="galleryViewSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Galería de Recuerdos</h2>
                 <div id="galleryViewGrid" class="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-2"></div>
@@ -71,16 +70,17 @@
                 <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
             </section>
 
-            <!-- VISTA DE VOTACIÓN -->
             <section id="voteSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-2">Votá por tu favorita</h2>
-                <p class="text-gray-600 mb-4 font-semibold">Te quedan <span id="votesLeft" class="text-purple-600">3</span> votos</p>
+                <p class="text-gray-600 mb-4 font-semibold">Selecciona hasta 3 fotos</p>
                 <div id="voteGrid" class="grid grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto p-2"></div>
                 <p id="voteLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
-                <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
+                <div class="mt-4">
+                    <button id="confirmVoteBtn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-full shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed">Confirmar Votos (0/3)</button>
+                    <button class="back-btn mt-4 text-pink-500 hover:underline font-semibold">← Volver</button>
+                </div>
             </section>
 
-            <!-- VISTA DE RANKING -->
             <section id="rankingSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Top 10 - Más Votadas</h2>
                 <div id="rankingList" class="space-y-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
@@ -90,7 +90,13 @@
         </div>
     </div>
     
-    <!-- MODAL PARA VER IMAGEN/VIDEO -->
+    <div id="thankYouModal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-50">
+        <div class="text-center text-white p-8">
+            <p class="text-5xl mb-4">🎉</p>
+            <h3 class="text-3xl font-bold font-pacifico">¡Gracias por votar!</h3>
+        </div>
+    </div>
+
     <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
         <div class="relative max-w-3xl max-h-full"><button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button><img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src=""><video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video></div>
     </div>
@@ -107,7 +113,6 @@
   storageBucket: "cumplekaty.firebasestorage.app",
   messagingSenderId: "139981760540",
   appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
-        };
 
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
@@ -132,10 +137,7 @@
 
         // --- LÓGICA DE USUARIO Y VOTOS ---
         let userId = localStorage.getItem('userId');
-        if (!userId) {
-            userId = crypto.randomUUID();
-            localStorage.setItem('userId', userId);
-        }
+        if (!userId) { userId = crypto.randomUUID(); localStorage.setItem('userId', userId); }
         let userData = { votesLeft: 3, votedPhotos: [] };
         const userRef = doc(db, 'users', userId);
         
@@ -143,175 +145,226 @@
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) { userData = userSnap.data(); } 
             else { await setDoc(userRef, userData); }
-            document.getElementById('votesLeft').textContent = userData.votesLeft;
         }
         initializeUser();
 
-        // --- LÓGICA DE SUBIDA DE ARCHIVOS ---
-        const fileInput = document.getElementById('fileInput');
-        fileInput.addEventListener('change', handleUpload);
+        // --- LÓGICA DE SUBIDA ---
+        document.getElementById('fileInput').addEventListener('change', handleUpload);
         function handleUpload() {
             if (fileInput.files.length === 0) return;
             const files = fileInput.files;
-            let totalFiles = files.length;
-            let uploadedCount = 0;
             const uploadProgressContainer = document.getElementById('uploadProgressContainer');
             const progressBar = document.getElementById('progressBar');
             const uploadStatus = document.getElementById('uploadStatus');
             uploadProgressContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
-            uploadStatus.className = "mb-2 text-sm font-semibold text-gray-700";
-            uploadStatus.textContent = `Preparando subida...`;
-            Array.from(files).forEach((file) => {
-                const photoId = `${Date.now()}_${file.name}`;
-                const storageRef = ref(storage, `media/${photoId}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                uploadTask.on('state_changed', (snapshot) => {
-                    uploadStatus.textContent = `Subiendo ${uploadedCount + 1} de ${totalFiles}...`;
-                    progressBar.style.width = `${((snapshot.bytesTransferred / snapshot.totalBytes) / totalFiles + uploadedCount / totalFiles) * 100}%`;
-                }, (error) => {
-                    console.error("Error al subir:", error.code);
-                    uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error.</span>`;
-                    setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
-                }, async () => {
-                    const photoDocRef = doc(db, 'photos', photoId);
-                    await setDoc(photoDocRef, { votes: 0, storagePath: storageRef.fullPath });
-                    uploadedCount++;
-                    if (uploadedCount === totalFiles) {
-                        uploadStatus.className = "mb-2 text-sm font-semibold upload-success-animation";
-                        uploadStatus.textContent = '¡Archivos subidos con éxito!';
-                        setTimeout(() => uploadProgressContainer.classList.add('hidden'), 3000);
-                    }
+            uploadStatus.textContent = `Subiendo tus recuerdos...`;
+
+            let totalBytes = Array.from(files).reduce((acc, file) => acc + file.size, 0);
+            let totalBytesTransferred = 0;
+
+            const uploadPromises = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    const photoId = `${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, `media/${photoId}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            // Este cálculo es complejo para múltiples archivos, se actualiza al final de cada uno.
+                        }, 
+                        reject, 
+                        async () => {
+                            const photoDocRef = doc(db, 'photos', photoId);
+                            await setDoc(photoDocRef, { votes: 0, storagePath: storageRef.fullPath });
+                            totalBytesTransferred += file.size;
+                            progressBar.style.width = `${(totalBytesTransferred / totalBytes) * 100}%`;
+                            resolve();
+                        }
+                    );
                 });
             });
+
+            Promise.all(uploadPromises).then(() => {
+                uploadStatus.className = "mb-2 text-sm font-semibold upload-success-animation";
+                uploadStatus.textContent = '¡Archivos subidos con éxito!';
+                setTimeout(() => {
+                    uploadProgressContainer.classList.add('hidden');
+                    uploadStatus.className = "mb-2 text-sm font-semibold";
+                }, 3000);
+            }).catch(error => {
+                console.error("Error al subir:", error);
+                uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error.</span>`;
+                setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
+            });
+
             fileInput.value = '';
         }
 
-        // --- LÓGICA DE GALERÍA (SOLO VISTA) ---
+        // --- LÓGICA DE VOTACIÓN ---
+        let selectedPhotos = [];
+        const confirmVoteBtn = document.getElementById('confirmVoteBtn');
+        confirmVoteBtn.addEventListener('click', handleConfirmVote);
+
+        async function loadVoteOptions() {
+            if(userData.votesLeft <= 0) {
+                document.getElementById('voteSection').innerHTML = `<h2 class="text-3xl font-pacifico text-pink-500 mb-2">¡Ya votaste!</h2><p class="text-gray-600 mb-4">Gracias por participar.</p><button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>`;
+                document.querySelector('#voteSection .back-btn').addEventListener('click', () => { voteSection.classList.add('hidden'); mainView.classList.remove('hidden'); });
+                return;
+            }
+            selectedPhotos = [];
+            updateVoteButton();
+
+            const voteGrid = document.getElementById('voteGrid');
+            const loadingMsg = document.getElementById('voteLoadingMessage');
+            voteGrid.innerHTML = '';
+            loadingMsg.textContent = 'Cargando fotos... ✨';
+            loadingMsg.classList.remove('hidden');
+
+            const q = query(collection(db, "photos"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos para votar.'; return; }
+
+            for (const photoDoc of querySnapshot.docs) {
+                if(userData.votedPhotos.includes(photoDoc.id)) continue;
+
+                const photoData = photoDoc.data();
+                const url = await getDownloadURL(ref(storage, photoData.storagePath));
+
+                const container = document.createElement('div');
+                container.className = 'relative cursor-pointer rounded-lg overflow-hidden';
+                container.dataset.photoId = photoDoc.id;
+
+                const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
+                const thumb = document.createElement(isVideo ? 'video' : 'img');
+                thumb.src = url + (isVideo ? '#t=0.1' : '');
+                thumb.className = "w-full h-28 object-cover transition-transform duration-300 transform group-hover:scale-110";
+                
+                const checkmark = document.createElement('div');
+                checkmark.className = 'checkmark hidden absolute top-2 right-2 bg-purple-500 text-white rounded-full h-6 w-6 flex items-center justify-center';
+                checkmark.innerHTML = '✔';
+                
+                container.appendChild(thumb);
+                container.appendChild(checkmark);
+                container.onclick = () => toggleVoteSelection(container, photoDoc.id);
+                voteGrid.appendChild(container);
+            }
+            loadingMsg.classList.add('hidden');
+        }
+
+        function toggleVoteSelection(container, photoId) {
+            const index = selectedPhotos.indexOf(photoId);
+            if (index > -1) {
+                selectedPhotos.splice(index, 1);
+                container.classList.remove('photo-selected');
+            } else {
+                if(selectedPhotos.length < userData.votesLeft && selectedPhotos.length < 3) {
+                    selectedPhotos.push(photoId);
+                    container.classList.add('photo-selected');
+                } else {
+                    alert(`Solo puedes votar por ${Math.min(userData.votesLeft, 3)} fotos.`);
+                }
+            }
+            updateVoteButton();
+        }
+
+        function updateVoteButton() {
+            const votesToCast = selectedPhotos.length;
+            confirmVoteBtn.textContent = `Confirmar Votos (${votesToCast}/${Math.min(userData.votesLeft, 3)})`;
+            confirmVoteBtn.disabled = votesToCast === 0;
+        }
+
+        async function handleConfirmVote() {
+            if(selectedPhotos.length === 0) return;
+            
+            confirmVoteBtn.disabled = true;
+            confirmVoteBtn.textContent = 'Procesando...';
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists()) throw "Documento de usuario no existe!";
+                    
+                    const currentData = userDoc.data();
+                    if(currentData.votesLeft < selectedPhotos.length) throw "No tienes suficientes votos.";
+
+                    let newTotalVotes = 0;
+                    const statsRef = doc(db, "stats", "tally");
+                    const statsDoc = await transaction.get(statsRef);
+                    newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + selectedPhotos.length;
+
+                    for(const photoId of selectedPhotos) {
+                        const photoRef = doc(db, "photos", photoId);
+                        const photoDoc = await transaction.get(photoRef);
+                        if (!photoDoc.exists()) throw `La foto ${photoId} no existe.`;
+                        const newPhotoVotes = photoDoc.data().votes + 1;
+                        transaction.update(photoRef, { votes: newPhotoVotes });
+                    }
+                    
+                    transaction.update(userRef, { 
+                        votesLeft: currentData.votesLeft - selectedPhotos.length, 
+                        votedPhotos: [...currentData.votedPhotos, ...selectedPhotos] 
+                    });
+                    transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
+                });
+
+                document.getElementById('thankYouModal').classList.add('flex');
+                setTimeout(() => {
+                    document.getElementById('thankYouModal').classList.remove('flex');
+                    voteSection.classList.add('hidden');
+                    mainView.classList.remove('hidden');
+                    initializeUser();
+                }, 2500);
+
+            } catch (e) {
+                console.error("Transacción de voto fallida: ", e);
+                alert("Ocurrió un error al votar. Inténtalo de nuevo.");
+                confirmVoteBtn.disabled = false;
+                updateVoteButton();
+            }
+        }
+        
+        // --- Otras funciones (Ranking, Modal, Galería Simple, Confeti) se mantienen igual ---
         async function loadSimpleGallery() {
             const grid = document.getElementById('galleryViewGrid');
             const loadingMsg = document.getElementById('galleryViewLoadingMessage');
             grid.innerHTML = '';
             loadingMsg.textContent = 'Cargando recuerdos... ✨';
             loadingMsg.classList.remove('hidden');
-
             const q = query(collection(db, "photos"), orderBy("storagePath", "desc"));
             const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                loadingMsg.textContent = 'Aún no hay fotos. ¡Sé el primero en subir!';
-                return;
-            }
-
+            if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos.'; return; }
             for (const [index, photoDoc] of querySnapshot.docs.entries()) {
                 const photoData = photoDoc.data();
                 const url = await getDownloadURL(ref(storage, photoData.storagePath));
                 const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
-                
                 const thumb = document.createElement(isVideo ? 'video' : 'img');
                 thumb.src = url + (isVideo ? '#t=0.1' : '');
-                thumb.className = "w-full h-40 object-cover rounded-lg cursor-pointer shadow-md gallery-item-animation";
+                thumb.className = "w-full h-28 object-cover rounded-lg cursor-pointer shadow-md gallery-item-animation";
                 thumb.style.animationDelay = `${index * 0.05}s`;
                 thumb.onclick = () => openModal(url, isVideo);
-
                 grid.appendChild(thumb);
             }
             loadingMsg.classList.add('hidden');
         }
-
-        // --- LÓGICA DE VOTACIÓN ---
-        async function loadVoteOptions() {
-            const voteGrid = document.getElementById('voteGrid');
-            const loadingMsg = document.getElementById('voteLoadingMessage');
-            voteGrid.innerHTML = '';
-            loadingMsg.textContent = 'Cargando fotos... ✨';
-            loadingMsg.classList.remove('hidden');
-            const q = query(collection(db, "photos"));
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                loadingMsg.textContent = 'Aún no hay fotos para votar.';
-                return;
-            }
-            for (const photoDoc of querySnapshot.docs) {
-                const photoData = photoDoc.data();
-                const url = await getDownloadURL(ref(storage, photoData.storagePath));
-                const container = document.createElement('div');
-                container.className = 'relative';
-                const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
-                const thumb = document.createElement(isVideo ? 'video' : 'img');
-                thumb.src = url + (isVideo ? '#t=0.1' : '');
-                thumb.className = "w-full h-28 object-cover rounded-lg shadow-md";
-                const voteOverlay = document.createElement('div');
-                voteOverlay.className = 'absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 rounded-b-lg flex justify-between items-center';
-                const voteCount = document.createElement('span');
-                voteCount.className = 'text-white font-bold text-xs';
-                voteCount.textContent = `❤️ ${photoData.votes}`;
-                const voteBtn = document.createElement('button');
-                voteBtn.textContent = 'Votar';
-                const hasVoted = userData.votedPhotos.includes(photoDoc.id);
-                if (userData.votesLeft === 0 || hasVoted) { voteBtn.disabled = true; }
-                voteBtn.className = 'bg-purple-500 text-white px-2 py-1 text-xs rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed';
-                voteBtn.onclick = () => handleVote(photoDoc.id, voteBtn);
-                voteOverlay.appendChild(voteCount);
-                voteOverlay.appendChild(voteBtn);
-                container.appendChild(thumb);
-                container.appendChild(voteOverlay);
-                voteGrid.appendChild(container);
-            }
-            loadingMsg.classList.add('hidden');
-        }
-        async function handleVote(photoId, button) {
-            if(userData.votesLeft <= 0 || userData.votedPhotos.includes(photoId)) return;
-            button.disabled = true;
-            button.textContent = 'Votado';
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const photoRef = doc(db, "photos", photoId);
-                    const statsRef = doc(db, "stats", "tally");
-                    const userDoc = await transaction.get(userRef);
-                    const photoDoc = await transaction.get(photoRef);
-                    const statsDoc = await transaction.get(statsRef);
-                    if (!userDoc.exists() || !photoDoc.exists()) throw "Documento no existe!";
-                    const newVotesLeft = userDoc.data().votesLeft - 1;
-                    const newVotedPhotos = [...userDoc.data().votedPhotos, photoId];
-                    if (newVotesLeft < 0) return;
-                    const newPhotoVotes = photoDoc.data().votes + 1;
-                    const newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 1;
-                    transaction.update(userRef, { votesLeft: newVotesLeft, votedPhotos: newVotedPhotos });
-                    transaction.update(photoRef, { votes: newPhotoVotes });
-                    transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
-                });
-                await initializeUser();
-                loadVoteOptions();
-            } catch (e) {
-                console.error("Transacción fallida: ", e);
-                button.disabled = false;
-                button.textContent = 'Votar';
-            }
-        }
-
-        // --- LÓGICA DE RANKING ---
         async function loadRanking() {
             const rankingList = document.getElementById('rankingList');
             const loadingMsg = document.getElementById('rankingLoadingMessage');
             rankingList.innerHTML = '';
-            loadingMsg.textContent = 'Calculando ranking... �';
+            loadingMsg.textContent = 'Calculando ranking... 📊';
             loadingMsg.classList.remove('hidden');
             const statsRef = doc(db, "stats", "tally");
             const statsSnap = await getDoc(statsRef);
             const totalVotes = statsSnap.exists() ? statsSnap.data().totalVotes : 1;
             const q = query(collection(db, "photos"), orderBy("votes", "desc"), limit(10));
             const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                loadingMsg.textContent = 'Nadie ha votado todavía.';
-                return;
-            }
+            if (querySnapshot.empty) { loadingMsg.textContent = 'Nadie ha votado todavía.'; return; }
             const medals = ['🥇', '🥈', '🥉'];
             for (const [index, photoDoc] of querySnapshot.docs.entries()) {
                 const photoData = photoDoc.data();
                 if (photoData.votes === 0) continue;
                 const url = await getDownloadURL(ref(storage, photoData.storagePath));
-                const percentage = ((photoData.votes / totalVotes) * 100).toFixed(1);
+                const percentage = totalVotes > 0 ? ((photoData.votes / totalVotes) * 100).toFixed(1) : 0;
                 const item = document.createElement('div');
                 item.className = 'flex items-center gap-4 p-2 rounded-lg bg-white bg-opacity-50';
                 const medal = index < 3 ? medals[index] : `<span class="font-bold w-6 text-center">${index + 1}</span>`;
@@ -320,28 +373,16 @@
             }
             loadingMsg.classList.add('hidden');
         }
-
-        // --- LÓGICA DE MODAL ---
         const imageModal = document.getElementById('imageModal');
         const closeModal = document.getElementById('closeModal');
         const modalImage = document.getElementById('modalImage');
         const modalVideo = document.getElementById('modalVideo');
         closeModal.addEventListener('click', () => { imageModal.classList.remove('flex'); modalVideo.pause(); });
         function openModal(url, isVideo) {
-            if(isVideo) {
-                modalVideo.src = url;
-                modalVideo.classList.remove('hidden');
-                modalImage.classList.add('hidden');
-                modalVideo.play();
-            } else {
-                modalImage.src = url;
-                modalImage.classList.remove('hidden');
-                modalVideo.classList.add('hidden');
-            }
+            if(isVideo) { modalVideo.src = url; modalVideo.classList.remove('hidden'); modalImage.classList.add('hidden'); modalVideo.play(); } 
+            else { modalImage.src = url; modalImage.classList.remove('hidden'); modalVideo.classList.add('hidden'); }
             imageModal.classList.add('flex');
         }
-        
-        // --- LÓGICA DEL CONFETI ---
         const confettiContainer = document.getElementById('confetti-container');
         for (let i = 0; i < 50; i++) {
             const confetti = document.createElement('div');
@@ -355,4 +396,3 @@
     </script>
 </body>
 </html>
-�
