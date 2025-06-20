@@ -105,7 +105,11 @@
     </div>
 
     <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
-        <div class="relative max-w-3xl max-h-full"><button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button><a id="downloadBtn" class="hidden absolute -top-2 right-12 text-white bg-green-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10" title="Descargar foto" href="#"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></a><img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src=""><video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video></div>
+        <div class="relative max-w-3xl max-h-full">
+            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button>
+            <img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src="">
+            <video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video>
+        </div>
     </div>
 
     <script type="module">
@@ -155,7 +159,45 @@
         initializeUser();
 
         document.getElementById('fileInput').addEventListener('change', handleUpload);
-        function handleUpload() { /* ...código de subida sin cambios... */ }
+        function handleUpload() {
+            if (fileInput.files.length === 0) return;
+            const files = fileInput.files;
+            const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadProgressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            uploadStatus.textContent = `Subiendo tus recuerdos...`;
+            let totalBytes = Array.from(files).reduce((acc, file) => acc + file.size, 0);
+            let totalBytesTransferred = 0;
+            const uploadPromises = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    const photoId = `${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, `media/${photoId}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+                    uploadTask.on('state_changed', (snapshot) => {}, reject, async () => {
+                        const photoDocRef = doc(db, 'photos', photoId);
+                        await setDoc(photoDocRef, { votes: 0, storagePath: storageRef.fullPath });
+                        totalBytesTransferred += file.size;
+                        progressBar.style.width = `${(totalBytesTransferred / totalBytes) * 100}%`;
+                        resolve();
+                    });
+                });
+            });
+            Promise.all(uploadPromises).then(() => {
+                uploadStatus.className = "mb-2 text-sm font-semibold upload-success-animation";
+                uploadStatus.textContent = '¡Archivos subidos con éxito!';
+                setTimeout(() => {
+                    uploadProgressContainer.classList.add('hidden');
+                    uploadStatus.className = "mb-2 text-sm font-semibold";
+                }, 3000);
+            }).catch(error => {
+                console.error("Error al subir:", error);
+                uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error.</span>`;
+                setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
+            });
+            fileInput.value = '';
+        }
 
         function getThumbnailPath(originalPath) {
             if (!originalPath) return '';
@@ -174,14 +216,10 @@
             grid.innerHTML = '';
             loadingMsg.textContent = 'Cargando recuerdos... ✨';
             loadingMsg.classList.remove('hidden');
-            
             const q = query(collection(db, "photos"));
             const querySnapshot = await getDocs(q);
-
             if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos.'; return; }
-            
             const sortedDocs = querySnapshot.docs.sort((a,b) => b.id.localeCompare(a.id));
-
             for (const [index, photoDoc] of sortedDocs.entries()) {
                 const photoData = photoDoc.data();
                 const thumbnailUrl = await getThumbnailUrl(photoData.storagePath);
@@ -206,14 +244,12 @@
             const voteDoneView = document.getElementById('voteDoneView');
             const voteGrid = document.getElementById('voteGrid');
             const loadingMsg = document.getElementById('voteLoadingMessage');
-            
             await initializeUser();
             if (userData.hasVoted) {
                 voteActiveView.classList.add('hidden');
                 voteDoneView.classList.remove('hidden');
                 return;
             }
-            
             voteDoneView.classList.add('hidden');
             voteActiveView.classList.remove('hidden');
             selectedPhotos = [];
@@ -221,14 +257,10 @@
             voteGrid.innerHTML = '';
             loadingMsg.textContent = 'Cargando fotos... ✨';
             loadingMsg.classList.remove('hidden');
-
             const q = query(collection(db, "photos"));
             const querySnapshot = await getDocs(q);
-
             if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos para votar.'; return; }
-
             const sortedDocs = querySnapshot.docs.sort((a,b) => b.id.localeCompare(a.id));
-
             for (const photoDoc of sortedDocs) {
                 const photoData = photoDoc.data();
                 const thumbnailUrl = await getThumbnailUrl(photoData.storagePath);
@@ -240,20 +272,10 @@
                 thumb.src = thumbnailUrl;
                 thumb.className = "w-full h-28 object-cover";
                 thumb.loading = "lazy";
-                
-                const overlay = document.createElement('div');
-                overlay.className = 'absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300 opacity-0 group-hover:opacity-100 flex items-center justify-center';
-                const zoomIcon = document.createElement('button');
-                zoomIcon.innerHTML = '🔍';
-                zoomIcon.className = "text-white text-2xl";
-                zoomIcon.onclick = (e) => { e.stopPropagation(); openModal(photoData.storagePath, isVideo); };
-                overlay.appendChild(zoomIcon);
-
                 const checkmark = document.createElement('div');
                 checkmark.className = 'checkmark hidden absolute top-1 right-1 bg-purple-500 text-white rounded-full h-6 w-6 flex items-center justify-center';
                 checkmark.innerHTML = '✔';
                 container.appendChild(thumb);
-                container.appendChild(overlay);
                 container.appendChild(checkmark);
                 container.onclick = () => toggleVoteSelection(container, photoDoc.id);
                 voteGrid.appendChild(container);
@@ -363,19 +385,13 @@
                 return `<div class="w-1/3 flex flex-col items-center justify-end ${data.height} gallery-item-animation" style="animation-delay: ${index * 0.1}s"><div class="text-4xl">${data.medal}</div><img src="${winner.url}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-full border-4 border-white shadow-lg my-2"><div class="font-bold text-md sm:text-lg">${winner.votes} Votos</div><div class="text-xs sm:text-sm text-gray-600">${percentage}%</div></div>`;
             }).join('');
             
-            // Reordenar para el podio visual
             const podiumElements = document.createElement('div');
             podiumElements.innerHTML = podiumHtml;
             const places = Array.from(podiumElements.children);
-            if (places.length > 1) {
-                podiumContainer.appendChild(places[1]); // Segundo lugar
-            }
-            if (places.length > 0) {
-                podiumContainer.appendChild(places[0]); // Primer lugar
-            }
-            if (places.length > 2) {
-                podiumContainer.appendChild(places[2]); // Tercer lugar
-            }
+
+            if (places[1]) podiumContainer.appendChild(places[1]);
+            if (places[0]) podiumContainer.appendChild(places[0]);
+            if (places[2]) podiumContainer.appendChild(places[2]);
 
             loadingMsg.classList.add('hidden');
         }
@@ -384,45 +400,34 @@
         const closeModal = document.getElementById('closeModal');
         const modalImage = document.getElementById('modalImage');
         const modalVideo = document.getElementById('modalVideo');
-        const downloadBtn = document.getElementById('downloadBtn');
         
         closeModal.addEventListener('click', () => { imageModal.classList.remove('flex'); modalVideo.pause(); });
-        downloadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const url = e.currentTarget.href;
-            fetch(url).then(res => res.blob()).then(blob => {
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = blobUrl;
-                    a.download = `recuerdo-katy-${Date.now()}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(blobUrl);
-                    a.remove();
-                }).catch(() => window.open(url, '_blank'));
-        });
+        
         async function openModal(originalPath, isVideo) {
             const url = await getDownloadURL(ref(storage, originalPath));
             if (isVideo) {
                 modalVideo.src = url;
                 modalVideo.classList.remove('hidden');
                 modalImage.classList.add('hidden');
-                downloadBtn.classList.add('hidden');
                 modalVideo.play();
             } else {
                 modalImage.src = url;
                 modalImage.classList.remove('hidden');
                 modalVideo.classList.add('hidden');
-                downloadBtn.href = url;
-                downloadBtn.classList.remove('hidden');
             }
             imageModal.classList.add('flex');
         }
         
         const confettiContainer = document.getElementById('confetti-container');
-        for (let i = 0; i < 50; i++) { /* ...código de confeti sin cambios... */ }
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = `${Math.random() * 100}vw`;
+            confetti.style.animationDuration = `${Math.random() * 3 + 4}s`;
+            confetti.style.animationDelay = `${Math.random() * 5}s`;
+            confetti.style.backgroundColor = ['#ec4899', '#f9a8d4', '#fef3c7', '#a78bfa'][Math.floor(Math.random() * 4)];
+            confettiContainer.appendChild(confetti);
+        }
     </script>
 </body>
 </html>
-�
