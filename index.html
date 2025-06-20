@@ -72,11 +72,11 @@
 
             <section id="voteSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-2">Votá por tu favorita</h2>
-                <p class="text-gray-600 mb-4 font-semibold">Selecciona hasta 3 fotos</p>
+                <p class="text-gray-600 mb-4 font-semibold">Selecciona exactamente 3 fotos</p>
                 <div id="voteGrid" class="grid grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto p-2"></div>
                 <p id="voteLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
                 <div class="mt-4">
-                    <button id="confirmVoteBtn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-full shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed">Confirmar Votos (0/3)</button>
+                    <button id="confirmVoteBtn" class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-full shadow-lg cursor-not-allowed">Confirmar Votos (0/3)</button>
                     <button class="back-btn mt-4 text-pink-500 hover:underline font-semibold">← Volver</button>
                 </div>
             </section>
@@ -107,7 +107,7 @@
         import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
   authDomain: "cumplekaty.firebaseapp.com",
   projectId: "cumplekaty",
   storageBucket: "cumplekaty.firebasestorage.app",
@@ -119,7 +119,6 @@
         const storage = getStorage(app);
         const db = getFirestore(app);
 
-        // --- MANEJO DE VISTAS ---
         const mainView = document.getElementById('mainView');
         const galleryViewSection = document.getElementById('galleryViewSection');
         const voteSection = document.getElementById('voteSection');
@@ -136,10 +135,9 @@
             mainView.classList.remove('hidden');
         }));
 
-        // --- LÓGICA DE USUARIO Y VOTOS ---
         let userId = localStorage.getItem('userId');
         if (!userId) { userId = crypto.randomUUID(); localStorage.setItem('userId', userId); }
-        let userData = { votesLeft: 3, votedPhotos: [] };
+        let userData = { hasVoted: false };
         const userRef = doc(db, 'users', userId);
         
         async function initializeUser() {
@@ -149,7 +147,6 @@
         }
         initializeUser();
 
-        // --- LÓGICA DE SUBIDA ---
         document.getElementById('fileInput').addEventListener('change', handleUpload);
         function handleUpload() {
             if (fileInput.files.length === 0) return;
@@ -170,9 +167,7 @@
                     const storageRef = ref(storage, `media/${photoId}`);
                     const uploadTask = uploadBytesResumable(storageRef, file);
                     uploadTask.on('state_changed', 
-                        (snapshot) => {
-                            // Este cálculo es complejo para múltiples archivos, se actualiza al final de cada uno.
-                        }, 
+                        (snapshot) => {}, 
                         reject, 
                         async () => {
                             const photoDocRef = doc(db, 'photos', photoId);
@@ -201,13 +196,13 @@
             fileInput.value = '';
         }
 
-        // --- LÓGICA DE VOTACIÓN ---
         let selectedPhotos = [];
         const confirmVoteBtn = document.getElementById('confirmVoteBtn');
         confirmVoteBtn.addEventListener('click', handleConfirmVote);
 
         async function loadVoteOptions() {
-            if(userData.votesLeft <= 0) {
+            await initializeUser();
+            if(userData.hasVoted) {
                 document.getElementById('voteSection').innerHTML = `<h2 class="text-3xl font-pacifico text-pink-500 mb-2">¡Ya votaste!</h2><p class="text-gray-600 mb-4">Gracias por participar.</p><button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>`;
                 document.querySelector('#voteSection .back-btn').addEventListener('click', () => { voteSection.classList.add('hidden'); mainView.classList.remove('hidden'); });
                 return;
@@ -227,24 +222,18 @@
             if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos para votar.'; return; }
 
             for (const photoDoc of querySnapshot.docs) {
-                if(userData.votedPhotos.includes(photoDoc.id)) continue;
-
                 const photoData = photoDoc.data();
                 const url = await getDownloadURL(ref(storage, photoData.storagePath));
-
                 const container = document.createElement('div');
                 container.className = 'relative cursor-pointer rounded-lg overflow-hidden';
                 container.dataset.photoId = photoDoc.id;
-
                 const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
                 const thumb = document.createElement(isVideo ? 'video' : 'img');
                 thumb.src = url + (isVideo ? '#t=0.1' : '');
                 thumb.className = "w-full h-28 object-cover transition-transform duration-300 transform group-hover:scale-110";
-                
                 const checkmark = document.createElement('div');
                 checkmark.className = 'checkmark hidden absolute top-2 right-2 bg-purple-500 text-white rounded-full h-6 w-6 flex items-center justify-center';
                 checkmark.innerHTML = '✔';
-                
                 container.appendChild(thumb);
                 container.appendChild(checkmark);
                 container.onclick = () => toggleVoteSelection(container, photoDoc.id);
@@ -259,11 +248,11 @@
                 selectedPhotos.splice(index, 1);
                 container.classList.remove('photo-selected');
             } else {
-                if(selectedPhotos.length < userData.votesLeft && selectedPhotos.length < 3) {
+                if(selectedPhotos.length < 3) {
                     selectedPhotos.push(photoId);
                     container.classList.add('photo-selected');
                 } else {
-                    alert(`Solo puedes votar por ${Math.min(userData.votesLeft, 3)} fotos.`);
+                    alert(`Solo puedes seleccionar 3 fotos.`);
                 }
             }
             updateVoteButton();
@@ -271,12 +260,20 @@
 
         function updateVoteButton() {
             const votesToCast = selectedPhotos.length;
-            confirmVoteBtn.textContent = `Confirmar Votos (${votesToCast}/${Math.min(userData.votesLeft, 3)})`;
-            confirmVoteBtn.disabled = votesToCast === 0;
+            confirmVoteBtn.textContent = `Confirmar Votos (${votesToCast}/3)`;
+            if (votesToCast === 3) {
+                confirmVoteBtn.disabled = false;
+                confirmVoteBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                confirmVoteBtn.classList.add('bg-green-500');
+            } else {
+                confirmVoteBtn.disabled = true;
+                confirmVoteBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                confirmVoteBtn.classList.remove('bg-green-500');
+            }
         }
 
         async function handleConfirmVote() {
-            if(selectedPhotos.length === 0) return;
+            if(selectedPhotos.length !== 3) return;
             
             confirmVoteBtn.disabled = true;
             confirmVoteBtn.textContent = 'Procesando...';
@@ -284,15 +281,12 @@
             try {
                 await runTransaction(db, async (transaction) => {
                     const userDoc = await transaction.get(userRef);
-                    if (!userDoc.exists()) throw "Documento de usuario no existe!";
+                    if (!userDoc.exists() || userDoc.data().hasVoted) throw "El usuario ya ha votado.";
                     
-                    const currentData = userDoc.data();
-                    if(currentData.votesLeft < selectedPhotos.length) throw "No tienes suficientes votos.";
-
                     let newTotalVotes = 0;
                     const statsRef = doc(db, "stats", "tally");
                     const statsDoc = await transaction.get(statsRef);
-                    newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + selectedPhotos.length;
+                    newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
 
                     for(const photoId of selectedPhotos) {
                         const photoRef = doc(db, "photos", photoId);
@@ -302,10 +296,7 @@
                         transaction.update(photoRef, { votes: newPhotoVotes });
                     }
                     
-                    transaction.update(userRef, { 
-                        votesLeft: currentData.votesLeft - selectedPhotos.length, 
-                        votedPhotos: [...currentData.votedPhotos, ...selectedPhotos] 
-                    });
+                    transaction.update(userRef, { hasVoted: true });
                     transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
                 });
 
@@ -314,7 +305,6 @@
                     document.getElementById('thankYouModal').classList.remove('flex');
                     voteSection.classList.add('hidden');
                     mainView.classList.remove('hidden');
-                    initializeUser();
                 }, 2500);
 
             } catch (e) {
@@ -325,7 +315,6 @@
             }
         }
         
-        // --- Otras funciones (Ranking, Modal, Galería Simple, Confeti) se mantienen igual ---
         async function loadSimpleGallery() {
             const grid = document.getElementById('galleryViewGrid');
             const loadingMsg = document.getElementById('galleryViewLoadingMessage');
