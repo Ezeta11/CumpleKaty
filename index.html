@@ -76,7 +76,7 @@
                 <div id="voteGrid" class="grid grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto p-2"></div>
                 <p id="voteLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
                 <div class="mt-4">
-                    <button id="confirmVoteBtn" class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-full shadow-lg cursor-not-allowed">Confirmar Votos (0/3)</button>
+                    <button id="confirmVoteBtn" class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-full shadow-lg cursor-not-allowed transition-colors duration-300">Confirmar Votos (0/3)</button>
                     <button class="back-btn mt-4 text-pink-500 hover:underline font-semibold">← Volver</button>
                 </div>
             </section>
@@ -192,7 +192,6 @@
                 uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error.</span>`;
                 setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
             });
-
             fileInput.value = '';
         }
 
@@ -209,18 +208,14 @@
             }
             selectedPhotos = [];
             updateVoteButton();
-
             const voteGrid = document.getElementById('voteGrid');
             const loadingMsg = document.getElementById('voteLoadingMessage');
             voteGrid.innerHTML = '';
             loadingMsg.textContent = 'Cargando fotos... ✨';
             loadingMsg.classList.remove('hidden');
-
             const q = query(collection(db, "photos"));
             const querySnapshot = await getDocs(q);
-
             if (querySnapshot.empty) { loadingMsg.textContent = 'Aún no hay fotos para votar.'; return; }
-
             for (const photoDoc of querySnapshot.docs) {
                 const photoData = photoDoc.data();
                 const url = await getDownloadURL(ref(storage, photoData.storagePath));
@@ -251,8 +246,6 @@
                 if(selectedPhotos.length < 3) {
                     selectedPhotos.push(photoId);
                     container.classList.add('photo-selected');
-                } else {
-                    alert(`Solo puedes seleccionar 3 fotos.`);
                 }
             }
             updateVoteButton();
@@ -274,44 +267,40 @@
 
         async function handleConfirmVote() {
             if(selectedPhotos.length !== 3) return;
-            
             confirmVoteBtn.disabled = true;
             confirmVoteBtn.textContent = 'Procesando...';
-
             try {
                 await runTransaction(db, async (transaction) => {
                     const userDoc = await transaction.get(userRef);
-                    if (!userDoc.exists() || userDoc.data().hasVoted) throw "El usuario ya ha votado.";
-                    
+                    if (!userDoc.exists() || userDoc.data().hasVoted) throw new Error("El usuario ya ha votado.");
                     let newTotalVotes = 0;
                     const statsRef = doc(db, "stats", "tally");
                     const statsDoc = await transaction.get(statsRef);
                     newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
-
                     for(const photoId of selectedPhotos) {
                         const photoRef = doc(db, "photos", photoId);
                         const photoDoc = await transaction.get(photoRef);
-                        if (!photoDoc.exists()) throw `La foto ${photoId} no existe.`;
-                        const newPhotoVotes = photoDoc.data().votes + 1;
-                        transaction.update(photoRef, { votes: newPhotoVotes });
+                        if (!photoDoc.exists()) throw new Error(`La foto ${photoId} no existe.`);
+                        transaction.update(photoRef, { votes: photoDoc.data().votes + 1 });
                     }
-                    
                     transaction.update(userRef, { hasVoted: true });
                     transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
                 });
-
                 document.getElementById('thankYouModal').classList.add('flex');
                 setTimeout(() => {
                     document.getElementById('thankYouModal').classList.remove('flex');
                     voteSection.classList.add('hidden');
                     mainView.classList.remove('hidden');
                 }, 2500);
-
             } catch (e) {
                 console.error("Transacción de voto fallida: ", e);
-                alert("Ocurrió un error al votar. Inténtalo de nuevo.");
-                confirmVoteBtn.disabled = false;
-                updateVoteButton();
+                confirmVoteBtn.textContent = 'Error al votar. Intenta de nuevo.';
+                confirmVoteBtn.classList.remove('bg-green-500');
+                confirmVoteBtn.classList.add('bg-red-500', 'cursor-not-allowed');
+                setTimeout(() => {
+                    confirmVoteBtn.disabled = false;
+                    updateVoteButton();
+                }, 4000);
             }
         }
         
