@@ -104,15 +104,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
-  authDomain: "cumplekaty.firebaseapp.com",
-  projectId: "cumplekaty",
-  storageBucket: "cumplekaty.firebasestorage.app",
-  messagingSenderId: "139981760540",
-  appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
+            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+            authDomain: "cumplekaty.firebaseapp.com",
+            projectId: "cumplekaty",
+            storageBucket: "cumplekaty.firebasestorage.app", // Usando el valor correcto
+            messagingSenderId: "139981760540",
+            appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -272,34 +272,43 @@
             try {
                 await runTransaction(db, async (transaction) => {
                     const userDoc = await transaction.get(userRef);
-                    if (!userDoc.exists() || userDoc.data().hasVoted) throw new Error("El usuario ya ha votado.");
-                    let newTotalVotes = 0;
+                    if (!userDoc.exists() || userDoc.data().hasVoted) {
+                        throw new Error("El usuario ya ha votado.");
+                    }
+                    
                     const statsRef = doc(db, "stats", "tally");
                     const statsDoc = await transaction.get(statsRef);
-                    newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
+                    let newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
+
                     for(const photoId of selectedPhotos) {
                         const photoRef = doc(db, "photos", photoId);
                         const photoDoc = await transaction.get(photoRef);
                         if (!photoDoc.exists()) throw new Error(`La foto ${photoId} no existe.`);
-                        transaction.update(photoRef, { votes: photoDoc.data().votes + 1 });
+                        const newPhotoVotes = photoDoc.data().votes + 1;
+                        transaction.update(photoRef, { votes: newPhotoVotes });
                     }
+                    
                     transaction.update(userRef, { hasVoted: true });
                     transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
                 });
+
                 document.getElementById('thankYouModal').classList.add('flex');
                 setTimeout(() => {
                     document.getElementById('thankYouModal').classList.remove('flex');
                     voteSection.classList.add('hidden');
                     mainView.classList.remove('hidden');
+                    initializeUser(); // Refresca los datos del usuario por si acaso
                 }, 2500);
+
             } catch (e) {
-                console.error("Transacción de voto fallida: ", e);
-                confirmVoteBtn.textContent = 'Error al votar. Intenta de nuevo.';
+                console.error("Transacción de voto fallida: ", e.message);
+                confirmVoteBtn.textContent = 'Error: ' + e.message;
                 confirmVoteBtn.classList.remove('bg-green-500');
                 confirmVoteBtn.classList.add('bg-red-500', 'cursor-not-allowed');
                 setTimeout(() => {
                     confirmVoteBtn.disabled = false;
                     updateVoteButton();
+                    confirmVoteBtn.classList.remove('bg-red-500');
                 }, 4000);
             }
         }
