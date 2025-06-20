@@ -18,12 +18,13 @@
         }
         .font-pacifico { font-family: 'Pacifico', cursive; }
         .content-overlay {
-            background-color: rgba(255, 255, 255, 0.85);
+            background-color: rgba(255, 255, 255, 0.9); /* Aumenté un poco la opacidad */
             backdrop-filter: blur(5px);
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease-in-out;
         }
-        /* Estilo para el modal de visualización de imagen */
+        /* Estilo para el modal de visualización */
         #imageModal { display: none; }
         #imageModal.flex { display: flex; }
     </style>
@@ -32,37 +33,41 @@
 
     <div class="min-h-screen w-full flex items-center justify-center p-4">
         <div class="content-overlay w-full max-w-md text-center p-8">
-            <!-- Sección del Título -->
-            <header id="mainHeader">
-                <div>
-                    <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
+            <!-- Vista Principal -->
+            <div id="mainView">
+                <header>
+                    <div>
+                        <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
+                    </div>
+                    <h1 class="text-5xl sm:text-6xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
+                    <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
+                </header>
+                
+                <!-- Botones de Acción -->
+                <div class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
+                    <!-- Este input está oculto, pero la etiqueta de abajo lo activa -->
+                    <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
+                    <!-- Esta etiqueta funciona como el botón de subida -->
+                    <label for="fileInput" class="w-full cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">📸 Subir fotos y videos</label>
+                    <button id="showGalleryBtn" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver la galería</button>
                 </div>
-                <h1 class="text-5xl sm:text-6xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
-                <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
-            </header>
-            
-            <!-- Botones Principales -->
-            <div id="actionButtons" class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
-                <button id="showUploadBtn" class="w-full text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">📸 Subir fotos y videos</button>
-                <button id="showGalleryBtn" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver la galería</button>
+
+                <!-- Contenedor para la Barra de Progreso (oculto por defecto) -->
+                <div id="uploadProgressContainer" class="hidden mt-4 w-full max-w-sm mx-auto">
+                    <p id="uploadStatus" class="mb-2 text-sm text-gray-700 font-semibold"></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progressBar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
             </div>
             
-            <!-- Sección para Subir Archivos (oculta) -->
-            <section id="uploadSection" class="hidden">
-                <h2 class="text-2xl font-bold text-gray-700 mb-4">Sube tus recuerdos</h2>
-                <input type="file" id="fileInput" multiple accept="image/*,video/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 mb-4"/>
-                <button id="uploadBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">Confirmar y Subir</button>
-                <div id="uploadProgress" class="hidden mt-4 w-full bg-gray-200 rounded-full h-2.5"><div id="progressBar" class="bg-pink-500 h-2.5 rounded-full" style="width: 0%"></div></div>
-                <p id="uploadStatus" class="mt-2 text-sm text-gray-600"></p>
-                <button class="back-btn mt-4 text-pink-500 hover:underline">← Volver</button>
-            </section>
-            
-            <!-- Sección de la Galería (oculta) -->
+            <!-- Sección de la Galería (oculta por defecto) -->
             <section id="gallerySection" class="hidden">
-                <h2 class="text-3xl font-bold text-gray-700 mb-6">Galería de Recuerdos</h2>
-                <div id="galleryGrid" class="grid grid-cols-3 gap-2"></div>
+                <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Galería de Recuerdos</h2>
+                <!-- Las imágenes ahora son más grandes (grid-cols-2) -->
+                <div id="galleryGrid" class="grid grid-cols-2 gap-4"></div>
                 <p id="loadingMessage" class="text-gray-500 mt-8">Cargando...</p>
-                <button class="back-btn mt-6 text-pink-500 hover:underline">← Volver</button>
+                <button id="backToMainBtn" class="mt-8 text-pink-500 hover:underline font-semibold">← Volver</button>
             </section>
         </div>
     </div>
@@ -70,7 +75,7 @@
     <!-- Modal para ver imagen/video en grande -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
         <div class="relative max-w-3xl max-h-full">
-            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg">&times;</button>
+            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button>
             <img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src="">
             <video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video>
         </div>
@@ -81,85 +86,84 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // INSTRUCCIÓN IMPORTANTE:
-        // Pega aquí la configuración de tu proyecto de Firebase.
+        // Tu configuración de Firebase ya está integrada.
         const firebaseConfig = {
-             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
-  authDomain: "cumplekaty.firebaseapp.com",
-  projectId: "cumplekaty",
-  storageBucket: "cumplekaty.firebasestorage.app",
-  messagingSenderId: "139981760540",
-  appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
+            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+            authDomain: "cumplekaty.firebaseapp.com",
+            projectId: "cumplekaty",
+            storageBucket: "cumplekaty.appspot.com", // Corregido al standard .appspot.com
+            messagingSenderId: "139981760540",
+            appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
 
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        // --- MANEJO DE VISTAS ---
-        const mainHeader = document.getElementById('mainHeader');
-        const actionButtons = document.getElementById('actionButtons');
-        const uploadSection = document.getElementById('uploadSection');
+        // --- Elementos del DOM ---
+        const mainView = document.getElementById('mainView');
         const gallerySection = document.getElementById('gallerySection');
-        const backBtns = document.querySelectorAll('.back-btn');
-        
-        document.getElementById('showUploadBtn').addEventListener('click', () => showView(uploadSection));
-        document.getElementById('showGalleryBtn').addEventListener('click', () => {
-            showView(gallerySection);
-            loadMedia();
-        });
-        backBtns.forEach(btn => btn.addEventListener('click', () => showView(actionButtons)));
-
-        function showView(viewToShow) {
-            mainHeader.classList.toggle('hidden', viewToShow !== actionButtons);
-            actionButtons.classList.toggle('hidden', viewToShow !== actionButtons);
-            uploadSection.classList.add('hidden');
-            gallerySection.classList.add('hidden');
-            if (viewToShow !== actionButtons) viewToShow.classList.remove('hidden');
-        }
-
-        // --- LÓGICA DE SUBIDA ---
+        const showGalleryBtn = document.getElementById('showGalleryBtn');
+        const backToMainBtn = document.getElementById('backToMainBtn');
         const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadProgressContainer = document.getElementById('uploadProgressContainer');
         const progressBar = document.getElementById('progressBar');
         const uploadStatus = document.getElementById('uploadStatus');
+        
+        // --- Navegación ---
+        showGalleryBtn.addEventListener('click', () => {
+            mainView.classList.add('hidden');
+            gallerySection.classList.remove('hidden');
+            loadMedia();
+        });
+        backToMainBtn.addEventListener('click', () => {
+            gallerySection.classList.add('hidden');
+            mainView.classList.remove('hidden');
+        });
 
-        uploadBtn.addEventListener('click', () => {
-            if (fileInput.files.length === 0) {
-                uploadStatus.textContent = 'Por favor, selecciona al menos un archivo.';
-                return;
-            }
-            uploadProgress.classList.remove('hidden');
-            uploadStatus.textContent = '';
+        // --- Lógica de Subida ---
+        fileInput.addEventListener('change', handleUpload);
+
+        function handleUpload() {
+            if (fileInput.files.length === 0) return;
+
+            const files = fileInput.files;
+            let totalFiles = files.length;
             let uploadedCount = 0;
             
-            Array.from(fileInput.files).forEach(file => {
+            uploadProgressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            uploadStatus.textContent = `Subiendo 0 de ${totalFiles}...`;
+            
+            Array.from(files).forEach((file, index) => {
                 const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
                 const uploadTask = uploadBytesResumable(storageRef, file);
+
                 uploadTask.on('state_changed',
                     (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        progressBar.style.width = progress + '%';
+                        // Opcional: actualizar progreso total si se quiere más detalle
                     },
                     (error) => {
+                        console.error("Error al subir:", error);
                         uploadStatus.textContent = `Error al subir ${file.name}.`;
                     },
                     () => {
                         uploadedCount++;
-                        if (uploadedCount === fileInput.files.length) {
+                        progressBar.style.width = `${(uploadedCount / totalFiles) * 100}%`;
+                        uploadStatus.textContent = `Subiendo ${uploadedCount} de ${totalFiles}...`;
+                        
+                        if (uploadedCount === totalFiles) {
                             uploadStatus.textContent = '¡Archivos subidos con éxito!';
-                            fileInput.value = '';
                             setTimeout(() => {
-                                uploadProgress.classList.add('hidden');
-                                uploadStatus.textContent = '';
+                                uploadProgressContainer.classList.add('hidden');
                             }, 3000);
                         }
                     }
                 );
             });
-        });
+            fileInput.value = ''; // Resetea el input para poder subir los mismos archivos de nuevo
+        }
 
-        // --- LÓGICA DE GALERÍA Y MODAL ---
+        // --- Lógica de Galería y Modal ---
         const galleryGrid = document.getElementById('galleryGrid');
         const loadingMessage = document.getElementById('loadingMessage');
         const imageModal = document.getElementById('imageModal');
@@ -185,7 +189,8 @@
                     const isVideo = itemRef.name.match(/\.(mp4|mov|webm|ogg)$/i);
                     const thumb = document.createElement(isVideo ? 'video' : 'img');
                     thumb.src = url + (isVideo ? '#t=0.1' : ''); // Preview para video
-                    thumb.className = "w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity";
+                    // Clase de tamaño para la galería más grande
+                    thumb.className = "w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity shadow-md";
                     thumb.addEventListener('click', () => openModal(url, isVideo));
                     galleryGrid.appendChild(thumb);
                 }
@@ -201,6 +206,7 @@
                 modalVideo.src = url;
                 modalVideo.classList.remove('hidden');
                 modalImage.classList.add('hidden');
+                modalVideo.play();
             } else {
                 modalImage.src = url;
                 modalImage.classList.remove('hidden');
@@ -213,6 +219,7 @@
             imageModal.classList.remove('flex');
             modalVideo.pause();
             modalVideo.src = '';
+            modalImage.src = '';
         });
     </script>
 </body>
