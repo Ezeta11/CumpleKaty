@@ -77,12 +77,12 @@
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const firebaseConfig = {
-             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
-  authDomain: "cumplekaty.firebaseapp.com",
-  projectId: "cumplekaty",
-  storageBucket: "cumplekaty.firebasestorage.app",
-  messagingSenderId: "139981760540",
-  appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
+            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+            authDomain: "cumplekaty.firebaseapp.com",
+            projectId: "cumplekaty",
+            storageBucket: "cumplekaty.appspot.com",
+            messagingSenderId: "139981760540",
+            appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -102,6 +102,7 @@
             gallerySection.classList.remove('hidden');
             loadMedia();
         });
+
         backToMainBtn.addEventListener('click', () => {
             gallerySection.classList.add('hidden');
             mainView.classList.remove('hidden');
@@ -129,22 +130,16 @@
                         uploadStatus.textContent = `Subiendo archivo ${index + 1} de ${totalFiles}... ${Math.round(progress)}%`;
                     },
                     (error) => {
-                        console.error("Error al subir:", error);
-                        // ¡NUEVO! Muestra el error en la pantalla.
-                        uploadStatus.innerHTML = `<span class="text-red-500">Error: ${error.code}. Revisa los permisos en Firebase.</span>`;
-                        setTimeout(() => {
-                            uploadProgressContainer.classList.add('hidden');
-                        }, 5000);
+                        console.error("Error al subir:", error.code);
+                        uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error. Intenta de nuevo.</span>`;
+                        setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
                     },
                     () => {
                         uploadedCount++;
                         progressBar.style.width = `${(uploadedCount / totalFiles) * 100}%`;
-                        
                         if (uploadedCount === totalFiles) {
                             uploadStatus.textContent = '¡Archivos subidos con éxito!';
-                            setTimeout(() => {
-                                uploadProgressContainer.classList.add('hidden');
-                            }, 3000);
+                            setTimeout(() => uploadProgressContainer.classList.add('hidden'), 3000);
                         }
                     }
                 );
@@ -184,7 +179,7 @@
                 loadingMessage.classList.add('hidden');
             } catch (error) {
                 loadingMessage.textContent = 'No se pudieron cargar los archivos.';
-                console.error("Error loading media:", error);
+                console.error("Error al cargar media:", error);
             }
         }
         
