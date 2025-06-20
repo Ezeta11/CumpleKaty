@@ -18,13 +18,12 @@
         }
         .font-pacifico { font-family: 'Pacifico', cursive; }
         .content-overlay {
-            background-color: rgba(255, 255, 255, 0.9); /* Aumenté un poco la opacidad */
+            background-color: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(5px);
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             transition: all 0.3s ease-in-out;
         }
-        /* Estilo para el modal de visualización */
         #imageModal { display: none; }
         #imageModal.flex { display: flex; }
     </style>
@@ -33,7 +32,6 @@
 
     <div class="min-h-screen w-full flex items-center justify-center p-4">
         <div class="content-overlay w-full max-w-md text-center p-8">
-            <!-- Vista Principal -->
             <div id="mainView">
                 <header>
                     <div>
@@ -43,16 +41,12 @@
                     <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
                 </header>
                 
-                <!-- Botones de Acción -->
                 <div class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
-                    <!-- Este input está oculto, pero la etiqueta de abajo lo activa -->
                     <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
-                    <!-- Esta etiqueta funciona como el botón de subida -->
                     <label for="fileInput" class="w-full cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">📸 Subir fotos y videos</label>
                     <button id="showGalleryBtn" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver la galería</button>
                 </div>
 
-                <!-- Contenedor para la Barra de Progreso (oculto por defecto) -->
                 <div id="uploadProgressContainer" class="hidden mt-4 w-full max-w-sm mx-auto">
                     <p id="uploadStatus" class="mb-2 text-sm text-gray-700 font-semibold"></p>
                     <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -61,10 +55,8 @@
                 </div>
             </div>
             
-            <!-- Sección de la Galería (oculta por defecto) -->
             <section id="gallerySection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Galería de Recuerdos</h2>
-                <!-- Las imágenes ahora son más grandes (grid-cols-2) -->
                 <div id="galleryGrid" class="grid grid-cols-2 gap-4"></div>
                 <p id="loadingMessage" class="text-gray-500 mt-8">Cargando...</p>
                 <button id="backToMainBtn" class="mt-8 text-pink-500 hover:underline font-semibold">← Volver</button>
@@ -72,7 +64,6 @@
         </div>
     </div>
     
-    <!-- Modal para ver imagen/video en grande -->
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
         <div class="relative max-w-3xl max-h-full">
             <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button>
@@ -81,17 +72,15 @@
         </div>
     </div>
 
-    <!-- Módulo de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Tu configuración de Firebase ya está integrada.
         const firebaseConfig = {
             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
             authDomain: "cumplekaty.firebaseapp.com",
             projectId: "cumplekaty",
-            storageBucket: "cumplekaty.appspot.com", // Corregido al standard .appspot.com
+            storageBucket: "cumplekaty.appspot.com",
             messagingSenderId: "139981760540",
             appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
@@ -99,7 +88,6 @@
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
 
-        // --- Elementos del DOM ---
         const mainView = document.getElementById('mainView');
         const gallerySection = document.getElementById('gallerySection');
         const showGalleryBtn = document.getElementById('showGalleryBtn');
@@ -109,7 +97,6 @@
         const progressBar = document.getElementById('progressBar');
         const uploadStatus = document.getElementById('uploadStatus');
         
-        // --- Navegación ---
         showGalleryBtn.addEventListener('click', () => {
             mainView.classList.add('hidden');
             gallerySection.classList.remove('hidden');
@@ -120,19 +107,17 @@
             mainView.classList.remove('hidden');
         });
 
-        // --- Lógica de Subida ---
         fileInput.addEventListener('change', handleUpload);
 
         function handleUpload() {
             if (fileInput.files.length === 0) return;
-
             const files = fileInput.files;
             let totalFiles = files.length;
             let uploadedCount = 0;
             
             uploadProgressContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
-            uploadStatus.textContent = `Subiendo 0 de ${totalFiles}...`;
+            uploadStatus.textContent = `Preparando subida...`;
             
             Array.from(files).forEach((file, index) => {
                 const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
@@ -140,16 +125,20 @@
 
                 uploadTask.on('state_changed',
                     (snapshot) => {
-                        // Opcional: actualizar progreso total si se quiere más detalle
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        uploadStatus.textContent = `Subiendo archivo ${index + 1} de ${totalFiles}... ${Math.round(progress)}%`;
                     },
                     (error) => {
                         console.error("Error al subir:", error);
-                        uploadStatus.textContent = `Error al subir ${file.name}.`;
+                        // ¡NUEVO! Muestra el error en la pantalla.
+                        uploadStatus.innerHTML = `<span class="text-red-500">Error: ${error.code}. Revisa los permisos en Firebase.</span>`;
+                        setTimeout(() => {
+                            uploadProgressContainer.classList.add('hidden');
+                        }, 5000);
                     },
                     () => {
                         uploadedCount++;
                         progressBar.style.width = `${(uploadedCount / totalFiles) * 100}%`;
-                        uploadStatus.textContent = `Subiendo ${uploadedCount} de ${totalFiles}...`;
                         
                         if (uploadedCount === totalFiles) {
                             uploadStatus.textContent = '¡Archivos subidos con éxito!';
@@ -160,10 +149,9 @@
                     }
                 );
             });
-            fileInput.value = ''; // Resetea el input para poder subir los mismos archivos de nuevo
+            fileInput.value = '';
         }
 
-        // --- Lógica de Galería y Modal ---
         const galleryGrid = document.getElementById('galleryGrid');
         const loadingMessage = document.getElementById('loadingMessage');
         const imageModal = document.getElementById('imageModal');
@@ -188,8 +176,7 @@
                     const url = await getDownloadURL(itemRef);
                     const isVideo = itemRef.name.match(/\.(mp4|mov|webm|ogg)$/i);
                     const thumb = document.createElement(isVideo ? 'video' : 'img');
-                    thumb.src = url + (isVideo ? '#t=0.1' : ''); // Preview para video
-                    // Clase de tamaño para la galería más grande
+                    thumb.src = url + (isVideo ? '#t=0.1' : '');
                     thumb.className = "w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity shadow-md";
                     thumb.addEventListener('click', () => openModal(url, isVideo));
                     galleryGrid.appendChild(thumb);
