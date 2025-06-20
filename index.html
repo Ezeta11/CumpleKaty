@@ -356,7 +356,7 @@
                     winners.push({ ...photoDoc.data(), url: thumbnailUrl });
                 }
             }
-            const podiumData = [ { medal: '🥇', height: 'h-64' }, { medal: '�', height: 'h-48' }, { medal: '🥉', height: 'h-40' }];
+            const podiumData = [ { medal: '🥇', height: 'h-64' }, { medal: '🥈', height: 'h-48' }, { medal: '🥉', height: 'h-40' }];
             const podiumHtml = winners.map((winner, index) => {
                 const data = podiumData[index];
                 const percentage = totalVotes > 0 ? ((winner.votes / totalVotes) * 100).toFixed(1) : "0.0";
