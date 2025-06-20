@@ -52,9 +52,9 @@
                 <div class="grid grid-cols-2 gap-4 my-8 w-full max-w-sm mx-auto">
                     <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
                     <label for="fileInput" class="h-full flex items-center justify-center cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-transform duration-300 animate-pulse-button">📸 Subir</label>
-                    <button id="showGalleryBtn" class="h-full flex items-center justify-center text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver Galería</button>
-                    <button id="showVoteBtn" class="h-full flex items-center justify-center text-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">😂 Votar</button>
-                    <button id="showRankingBtn" class="h-full flex items-center justify-center text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🏆 Ranking</button>
+                    <button id="showGalleryBtn" class="h-full flex items-center justify-center text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.2s;">🖼️ Ver Galería</button>
+                    <button id="showVoteBtn" class="h-full flex items-center justify-center text-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.4s;">😂 Votar</button>
+                    <button id="showRankingBtn" class="h-full flex items-center justify-center text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300 animate-pulse-button" style="animation-delay: 0.6s;">🏆 Ranking</button>
                 </div>
 
                 <div id="uploadProgressContainer" class="hidden mt-4 w-full max-w-sm mx-auto">
@@ -66,7 +66,7 @@
             <!-- VISTA DE GALERÍA (SOLO VER) -->
             <section id="galleryViewSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Galería de Recuerdos</h2>
-                <div id="galleryViewGrid" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-2"></div>
+                <div id="galleryViewGrid" class="grid grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-2"></div>
                 <p id="galleryViewLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
                 <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
             </section>
@@ -101,7 +101,7 @@
         import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-           apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
   authDomain: "cumplekaty.firebaseapp.com",
   projectId: "cumplekaty",
   storageBucket: "cumplekaty.firebasestorage.app",
@@ -150,7 +150,6 @@
         // --- LÓGICA DE SUBIDA DE ARCHIVOS ---
         const fileInput = document.getElementById('fileInput');
         fileInput.addEventListener('change', handleUpload);
-        // El resto de handleUpload y sus helpers se mantiene igual...
         function handleUpload() {
             if (fileInput.files.length === 0) return;
             const files = fileInput.files;
@@ -211,7 +210,7 @@
                 
                 const thumb = document.createElement(isVideo ? 'video' : 'img');
                 thumb.src = url + (isVideo ? '#t=0.1' : '');
-                thumb.className = "w-full h-48 object-cover rounded-lg cursor-pointer shadow-md gallery-item-animation";
+                thumb.className = "w-full h-40 object-cover rounded-lg cursor-pointer shadow-md gallery-item-animation";
                 thumb.style.animationDelay = `${index * 0.05}s`;
                 thumb.onclick = () => openModal(url, isVideo);
 
@@ -296,7 +295,7 @@
             const rankingList = document.getElementById('rankingList');
             const loadingMsg = document.getElementById('rankingLoadingMessage');
             rankingList.innerHTML = '';
-            loadingMsg.textContent = 'Calculando ranking... 📊';
+            loadingMsg.textContent = 'Calculando ranking... �';
             loadingMsg.classList.remove('hidden');
             const statsRef = doc(db, "stats", "tally");
             const statsSnap = await getDoc(statsRef);
@@ -356,3 +355,4 @@
     </script>
 </body>
 </html>
+�
