@@ -11,129 +11,97 @@
     <style>
         body {
             background-image: url('https://images.pexels.com/photos/2263436/pexels-photo-2263436.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden; /* Prevenir scroll horizontal por el confeti */
+            background-size: cover; background-position: center; background-attachment: fixed;
+            font-family: 'Inter', sans-serif; overflow-x: hidden;
         }
         .font-pacifico { font-family: 'Pacifico', cursive; }
         .content-overlay {
-            background-color: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(5px);
+            border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             animation: fadeInScale 0.8s ease-out forwards;
         }
-        #imageModal { display: none; }
-        #imageModal.flex { display: flex; }
-
-        /* --- ANIMACIONES --- */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); }
-        }
-        .animate-pulse-button {
-            animation: pulse 2.5s infinite;
-        }
-
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.5); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .gallery-item-animation {
-            animation: popIn 0.5s ease-out forwards;
-            opacity: 0;
-        }
-
-        /* ¡NUEVO! Animación para el mensaje de éxito */
-        @keyframes popUpMessage {
-            0% { opacity: 0; transform: scale(0.8) translateY(10px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .upload-success-animation {
-            animation: popUpMessage 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-            color: #16a34a; /* Un verde festivo para el éxito */
-        }
-
-
-        /* --- EFECTO CONFETI --- */
-        .confetti {
-            position: fixed;
-            top: -10px;
-            width: 10px;
-            height: 10px;
-            background-color: #f472b6; /* Rosa */
-            opacity: 0.7;
-            border-radius: 50%;
-            animation: fall linear infinite;
-        }
-        @keyframes fall {
-            to {
-                transform: translateY(105vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
+        .modal { display: none; }
+        .modal.flex { display: flex; }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .animate-pulse-button { animation: pulse 2.5s infinite; }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        .gallery-item-animation { animation: popIn 0.5s ease-out forwards; opacity: 0; }
+        @keyframes popUpMessage { 0% { opacity: 0; transform: scale(0.8) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        .upload-success-animation { animation: popUpMessage 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; color: #16a34a; }
+        .confetti { position: fixed; top: -10px; width: 10px; height: 10px; background-color: #f472b6; opacity: 0.7; border-radius: 50%; animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(105vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- Contenedor para el confeti -->
     <div id="confetti-container"></div>
 
     <div class="min-h-screen w-full flex items-center justify-center p-4">
-        <div class="content-overlay w-full max-w-md text-center p-8">
+        <div class="content-overlay w-full max-w-md text-center p-6 sm:p-8">
+
+            <!-- VISTA PRINCIPAL -->
             <div id="mainView">
                 <header>
-                    <div>
-                        <img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white">
-                    </div>
+                    <div><img src="https://placehold.co/120x120/fecdd3/e11d48?text=🥳" alt="Icono de fiesta" class="rounded-full shadow-lg mx-auto mb-6 ring-4 ring-white"></div>
                     <h1 class="text-5xl sm:text-6xl font-pacifico text-pink-500 drop-shadow-lg">Mi cumpleaños Katy</h1>
                     <p class="text-gray-600 mt-4 text-base sm:text-lg font-medium">¡Compartamos los mejores momentos!</p>
                 </header>
                 
-                <div class="flex flex-col justify-center items-center gap-4 my-8 w-full max-w-sm mx-auto">
+                <!-- Contenedor de botones en 2x2 -->
+                <div class="grid grid-cols-2 gap-4 my-8 w-full max-w-sm mx-auto">
                     <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"/>
-                    <label for="fileInput" class="w-full cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-full shadow-lg transition-transform duration-300 animate-pulse-button">📸 Subir fotos y videos</label>
-                    <button id="showGalleryBtn" class="w-full text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-4 px-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver la galería</button>
+                    <label for="fileInput" class="h-full flex items-center justify-center cursor-pointer text-center bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transition-transform duration-300 animate-pulse-button">📸 Subir</label>
+                    <button id="showGalleryBtn" class="h-full flex items-center justify-center text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🖼️ Ver Galería</button>
+                    <button id="showVoteBtn" class="h-full flex items-center justify-center text-center bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">😂 Votar</button>
+                    <button id="showRankingBtn" class="h-full flex items-center justify-center text-center bg-white border-2 border-pink-500 text-pink-500 hover:bg-pink-50 font-bold py-3 px-4 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300">🏆 Ranking</button>
                 </div>
 
                 <div id="uploadProgressContainer" class="hidden mt-4 w-full max-w-sm mx-auto">
                     <p id="uploadStatus" class="mb-2 text-sm font-semibold"></p>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div id="progressBar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="progressBar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div></div>
                 </div>
             </div>
             
-            <section id="gallerySection" class="hidden">
+            <!-- VISTA DE GALERÍA (SOLO VER) -->
+            <section id="galleryViewSection" class="hidden">
                 <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Galería de Recuerdos</h2>
-                <div id="galleryGrid" class="grid grid-cols-3 gap-3"></div>
-                <p id="loadingMessage" class="text-gray-500 mt-8">Cargando...</p>
-                <button id="backToMainBtn" class="mt-8 text-pink-500 hover:underline font-semibold">← Volver</button>
+                <div id="galleryViewGrid" class="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-2"></div>
+                <p id="galleryViewLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
+                <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
+            </section>
+
+            <!-- VISTA DE VOTACIÓN -->
+            <section id="voteSection" class="hidden">
+                <h2 class="text-3xl font-pacifico text-pink-500 mb-2">Votá por tu favorita</h2>
+                <p class="text-gray-600 mb-4 font-semibold">Te quedan <span id="votesLeft" class="text-purple-600">3</span> votos</p>
+                <div id="voteGrid" class="grid grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto p-2"></div>
+                <p id="voteLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
+                <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
+            </section>
+
+            <!-- VISTA DE RANKING -->
+            <section id="rankingSection" class="hidden">
+                <h2 class="text-3xl font-pacifico text-pink-500 mb-6">Top 10 - Más Votadas</h2>
+                <div id="rankingList" class="space-y-4 text-left max-h-[60vh] overflow-y-auto p-2"></div>
+                <p id="rankingLoadingMessage" class="text-gray-500 mt-8">Cargando...</p>
+                <button class="back-btn mt-6 text-pink-500 hover:underline font-semibold">← Volver</button>
             </section>
         </div>
     </div>
     
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
-        <div class="relative max-w-3xl max-h-full">
-            <button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button>
-            <img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src="">
-            <video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video>
-        </div>
+    <!-- MODAL PARA VER IMAGEN/VIDEO -->
+    <div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-80 items-center justify-center p-4 z-50">
+        <div class="relative max-w-3xl max-h-full"><button id="closeModal" class="absolute -top-2 -right-2 text-white bg-pink-500 rounded-full h-8 w-8 flex items-center justify-center text-lg z-10">&times;</button><img id="modalImage" class="hidden max-w-full max-h-[80vh] rounded-lg" src=""><video id="modalVideo" class="hidden max-w-full max-h-[80vh] rounded-lg" src="" controls></video></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+           apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
   authDomain: "cumplekaty.firebaseapp.com",
   projectId: "cumplekaty",
   storageBucket: "cumplekaty.firebasestorage.app",
@@ -143,114 +111,223 @@
 
         const app = initializeApp(firebaseConfig);
         const storage = getStorage(app);
+        const db = getFirestore(app);
 
+        // --- MANEJO DE VISTAS ---
         const mainView = document.getElementById('mainView');
-        const gallerySection = document.getElementById('gallerySection');
-        const showGalleryBtn = document.getElementById('showGalleryBtn');
-        const backToMainBtn = document.getElementById('backToMainBtn');
-        const fileInput = document.getElementById('fileInput');
-        const uploadProgressContainer = document.getElementById('uploadProgressContainer');
-        const progressBar = document.getElementById('progressBar');
-        const uploadStatus = document.getElementById('uploadStatus');
+        const galleryViewSection = document.getElementById('galleryViewSection');
+        const voteSection = document.getElementById('voteSection');
+        const rankingSection = document.getElementById('rankingSection');
         
-        showGalleryBtn.addEventListener('click', () => {
-            mainView.classList.add('hidden');
-            gallerySection.classList.remove('hidden');
-            loadMedia();
-        });
-
-        backToMainBtn.addEventListener('click', () => {
-            gallerySection.classList.add('hidden');
+        document.getElementById('showGalleryBtn').addEventListener('click', () => { mainView.classList.add('hidden'); galleryViewSection.classList.remove('hidden'); loadSimpleGallery(); });
+        document.getElementById('showVoteBtn').addEventListener('click', () => { mainView.classList.add('hidden'); voteSection.classList.remove('hidden'); loadVoteOptions(); });
+        document.getElementById('showRankingBtn').addEventListener('click', () => { mainView.classList.add('hidden'); rankingSection.classList.remove('hidden'); loadRanking(); });
+        
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
+            galleryViewSection.classList.add('hidden');
+            voteSection.classList.add('hidden');
+            rankingSection.classList.add('hidden');
             mainView.classList.remove('hidden');
-        });
+        }));
 
+        // --- LÓGICA DE USUARIO Y VOTOS ---
+        let userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = crypto.randomUUID();
+            localStorage.setItem('userId', userId);
+        }
+        let userData = { votesLeft: 3, votedPhotos: [] };
+        const userRef = doc(db, 'users', userId);
+        
+        async function initializeUser() {
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) { userData = userSnap.data(); } 
+            else { await setDoc(userRef, userData); }
+            document.getElementById('votesLeft').textContent = userData.votesLeft;
+        }
+        initializeUser();
+
+        // --- LÓGICA DE SUBIDA DE ARCHIVOS ---
+        const fileInput = document.getElementById('fileInput');
         fileInput.addEventListener('change', handleUpload);
-
+        // El resto de handleUpload y sus helpers se mantiene igual...
         function handleUpload() {
             if (fileInput.files.length === 0) return;
             const files = fileInput.files;
             let totalFiles = files.length;
             let uploadedCount = 0;
-            
+            const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const uploadStatus = document.getElementById('uploadStatus');
             uploadProgressContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
-            
-            // ¡NUEVO! Resetea los estilos del mensaje antes de empezar
             uploadStatus.className = "mb-2 text-sm font-semibold text-gray-700";
             uploadStatus.textContent = `Preparando subida...`;
-            
-            Array.from(files).forEach((file, index) => {
-                const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
+            Array.from(files).forEach((file) => {
+                const photoId = `${Date.now()}_${file.name}`;
+                const storageRef = ref(storage, `media/${photoId}`);
                 const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        uploadStatus.textContent = `Subiendo archivo ${index + 1} de ${totalFiles}... ${Math.round(progress)}%`;
-                    },
-                    (error) => {
-                        console.error("Error al subir:", error.code);
-                        uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error. Intenta de nuevo.</span>`;
-                        setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
-                    },
-                    () => {
-                        uploadedCount++;
-                        progressBar.style.width = `${(uploadedCount / totalFiles) * 100}%`;
-                        if (uploadedCount === totalFiles) {
-                            // ¡NUEVO! Aplica la animación al mensaje de éxito
-                            uploadStatus.className = "mb-2 text-sm font-semibold"; // Limpia clases previas
-                            uploadStatus.classList.add('upload-success-animation'); // Añade la animación
-                            uploadStatus.textContent = '¡Archivos subidos con éxito!';
-                            
-                            setTimeout(() => {
-                                uploadProgressContainer.classList.add('hidden');
-                            }, 3000);
-                        }
+                uploadTask.on('state_changed', (snapshot) => {
+                    uploadStatus.textContent = `Subiendo ${uploadedCount + 1} de ${totalFiles}...`;
+                    progressBar.style.width = `${((snapshot.bytesTransferred / snapshot.totalBytes) / totalFiles + uploadedCount / totalFiles) * 100}%`;
+                }, (error) => {
+                    console.error("Error al subir:", error.code);
+                    uploadStatus.innerHTML = `<span class="text-red-500">Ocurrió un error.</span>`;
+                    setTimeout(() => uploadProgressContainer.classList.add('hidden'), 5000);
+                }, async () => {
+                    const photoDocRef = doc(db, 'photos', photoId);
+                    await setDoc(photoDocRef, { votes: 0, storagePath: storageRef.fullPath });
+                    uploadedCount++;
+                    if (uploadedCount === totalFiles) {
+                        uploadStatus.className = "mb-2 text-sm font-semibold upload-success-animation";
+                        uploadStatus.textContent = '¡Archivos subidos con éxito!';
+                        setTimeout(() => uploadProgressContainer.classList.add('hidden'), 3000);
                     }
-                );
+                });
             });
             fileInput.value = '';
         }
 
-        const galleryGrid = document.getElementById('galleryGrid');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const imageModal = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImage');
-        const modalVideo = document.getElementById('modalVideo');
-        const closeModal = document.getElementById('closeModal');
+        // --- LÓGICA DE GALERÍA (SOLO VISTA) ---
+        async function loadSimpleGallery() {
+            const grid = document.getElementById('galleryViewGrid');
+            const loadingMsg = document.getElementById('galleryViewLoadingMessage');
+            grid.innerHTML = '';
+            loadingMsg.textContent = 'Cargando recuerdos... ✨';
+            loadingMsg.classList.remove('hidden');
 
-        async function loadMedia() {
-            galleryGrid.innerHTML = '';
-            loadingMessage.classList.remove('hidden');
-            loadingMessage.textContent = 'Cargando recuerdos... ✨';
-            
+            const q = query(collection(db, "photos"), orderBy("storagePath", "desc"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                loadingMsg.textContent = 'Aún no hay fotos. ¡Sé el primero en subir!';
+                return;
+            }
+
+            for (const [index, photoDoc] of querySnapshot.docs.entries()) {
+                const photoData = photoDoc.data();
+                const url = await getDownloadURL(ref(storage, photoData.storagePath));
+                const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
+                
+                const thumb = document.createElement(isVideo ? 'video' : 'img');
+                thumb.src = url + (isVideo ? '#t=0.1' : '');
+                thumb.className = "w-full h-48 object-cover rounded-lg cursor-pointer shadow-md gallery-item-animation";
+                thumb.style.animationDelay = `${index * 0.05}s`;
+                thumb.onclick = () => openModal(url, isVideo);
+
+                grid.appendChild(thumb);
+            }
+            loadingMsg.classList.add('hidden');
+        }
+
+        // --- LÓGICA DE VOTACIÓN ---
+        async function loadVoteOptions() {
+            const voteGrid = document.getElementById('voteGrid');
+            const loadingMsg = document.getElementById('voteLoadingMessage');
+            voteGrid.innerHTML = '';
+            loadingMsg.textContent = 'Cargando fotos... ✨';
+            loadingMsg.classList.remove('hidden');
+            const q = query(collection(db, "photos"));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                loadingMsg.textContent = 'Aún no hay fotos para votar.';
+                return;
+            }
+            for (const photoDoc of querySnapshot.docs) {
+                const photoData = photoDoc.data();
+                const url = await getDownloadURL(ref(storage, photoData.storagePath));
+                const container = document.createElement('div');
+                container.className = 'relative';
+                const isVideo = photoData.storagePath.match(/\.(mp4|mov|webm|ogg)$/i);
+                const thumb = document.createElement(isVideo ? 'video' : 'img');
+                thumb.src = url + (isVideo ? '#t=0.1' : '');
+                thumb.className = "w-full h-28 object-cover rounded-lg shadow-md";
+                const voteOverlay = document.createElement('div');
+                voteOverlay.className = 'absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 rounded-b-lg flex justify-between items-center';
+                const voteCount = document.createElement('span');
+                voteCount.className = 'text-white font-bold text-xs';
+                voteCount.textContent = `❤️ ${photoData.votes}`;
+                const voteBtn = document.createElement('button');
+                voteBtn.textContent = 'Votar';
+                const hasVoted = userData.votedPhotos.includes(photoDoc.id);
+                if (userData.votesLeft === 0 || hasVoted) { voteBtn.disabled = true; }
+                voteBtn.className = 'bg-purple-500 text-white px-2 py-1 text-xs rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed';
+                voteBtn.onclick = () => handleVote(photoDoc.id, voteBtn);
+                voteOverlay.appendChild(voteCount);
+                voteOverlay.appendChild(voteBtn);
+                container.appendChild(thumb);
+                container.appendChild(voteOverlay);
+                voteGrid.appendChild(container);
+            }
+            loadingMsg.classList.add('hidden');
+        }
+        async function handleVote(photoId, button) {
+            if(userData.votesLeft <= 0 || userData.votedPhotos.includes(photoId)) return;
+            button.disabled = true;
+            button.textContent = 'Votado';
             try {
-                const listRef = ref(storage, 'media/');
-                const res = await listAll(listRef);
-                if (res.items.length === 0) {
-                    loadingMessage.textContent = 'Aún no hay fotos. ¡Sé el primero en subir!';
-                    return;
-                }
-                const sortedItems = res.items.sort((a, b) => b.name.localeCompare(a.name));
-                
-                sortedItems.forEach(async (itemRef, index) => {
-                    const url = await getDownloadURL(itemRef);
-                    const isVideo = itemRef.name.match(/\.(mp4|mov|webm|ogg)$/i);
-                    const thumb = document.createElement(isVideo ? 'video' : 'img');
-                    thumb.src = url + (isVideo ? '#t=0.1' : '');
-                    thumb.className = "w-full h-28 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity shadow-md gallery-item-animation";
-                    thumb.style.animationDelay = `${index * 0.05}s`;
-                    thumb.addEventListener('click', () => openModal(url, isVideo));
-                    galleryGrid.appendChild(thumb);
+                await runTransaction(db, async (transaction) => {
+                    const photoRef = doc(db, "photos", photoId);
+                    const statsRef = doc(db, "stats", "tally");
+                    const userDoc = await transaction.get(userRef);
+                    const photoDoc = await transaction.get(photoRef);
+                    const statsDoc = await transaction.get(statsRef);
+                    if (!userDoc.exists() || !photoDoc.exists()) throw "Documento no existe!";
+                    const newVotesLeft = userDoc.data().votesLeft - 1;
+                    const newVotedPhotos = [...userDoc.data().votedPhotos, photoId];
+                    if (newVotesLeft < 0) return;
+                    const newPhotoVotes = photoDoc.data().votes + 1;
+                    const newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 1;
+                    transaction.update(userRef, { votesLeft: newVotesLeft, votedPhotos: newVotedPhotos });
+                    transaction.update(photoRef, { votes: newPhotoVotes });
+                    transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
                 });
-                
-                loadingMessage.classList.add('hidden');
-            } catch (error) {
-                loadingMessage.textContent = 'No se pudieron cargar los archivos.';
-                console.error("Error al cargar media:", error);
+                await initializeUser();
+                loadVoteOptions();
+            } catch (e) {
+                console.error("Transacción fallida: ", e);
+                button.disabled = false;
+                button.textContent = 'Votar';
             }
         }
-        
+
+        // --- LÓGICA DE RANKING ---
+        async function loadRanking() {
+            const rankingList = document.getElementById('rankingList');
+            const loadingMsg = document.getElementById('rankingLoadingMessage');
+            rankingList.innerHTML = '';
+            loadingMsg.textContent = 'Calculando ranking... 📊';
+            loadingMsg.classList.remove('hidden');
+            const statsRef = doc(db, "stats", "tally");
+            const statsSnap = await getDoc(statsRef);
+            const totalVotes = statsSnap.exists() ? statsSnap.data().totalVotes : 1;
+            const q = query(collection(db, "photos"), orderBy("votes", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                loadingMsg.textContent = 'Nadie ha votado todavía.';
+                return;
+            }
+            const medals = ['🥇', '🥈', '🥉'];
+            for (const [index, photoDoc] of querySnapshot.docs.entries()) {
+                const photoData = photoDoc.data();
+                if (photoData.votes === 0) continue;
+                const url = await getDownloadURL(ref(storage, photoData.storagePath));
+                const percentage = ((photoData.votes / totalVotes) * 100).toFixed(1);
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-4 p-2 rounded-lg bg-white bg-opacity-50';
+                const medal = index < 3 ? medals[index] : `<span class="font-bold w-6 text-center">${index + 1}</span>`;
+                item.innerHTML = `<div class="text-2xl w-8 text-center">${medal}</div><img src="${url}" class="w-16 h-16 object-cover rounded-md shadow-md"><div class="flex-grow"><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-pink-400 h-4 rounded-full text-xs font-medium text-white text-center leading-none" style="width: ${percentage}%">${percentage}%</div></div></div>`;
+                rankingList.appendChild(item);
+            }
+            loadingMsg.classList.add('hidden');
+        }
+
+        // --- LÓGICA DE MODAL ---
+        const imageModal = document.getElementById('imageModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
+        closeModal.addEventListener('click', () => { imageModal.classList.remove('flex'); modalVideo.pause(); });
         function openModal(url, isVideo) {
             if(isVideo) {
                 modalVideo.src = url;
@@ -265,23 +342,15 @@
             imageModal.classList.add('flex');
         }
         
-        closeModal.addEventListener('click', () => {
-            imageModal.classList.remove('flex');
-            modalVideo.pause();
-            modalVideo.src = '';
-            modalImage.src = '';
-        });
-
+        // --- LÓGICA DEL CONFETI ---
         const confettiContainer = document.getElementById('confetti-container');
-        const confettiCount = 50;
-        for (let i = 0; i < confettiCount; i++) {
+        for (let i = 0; i < 50; i++) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
             confetti.style.left = `${Math.random() * 100}vw`;
             confetti.style.animationDuration = `${Math.random() * 3 + 4}s`;
             confetti.style.animationDelay = `${Math.random() * 5}s`;
-            const colors = ['#ec4899', '#f9a8d4', '#fef3c7', '#a78bfa'];
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.backgroundColor = ['#ec4899', '#f9a8d4', '#fef3c7', '#a78bfa'][Math.floor(Math.random() * 4)];
             confettiContainer.appendChild(confetti);
         }
     </script>
