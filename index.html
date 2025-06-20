@@ -110,7 +110,7 @@
             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
             authDomain: "cumplekaty.firebaseapp.com",
             projectId: "cumplekaty",
-            storageBucket: "cumplekaty.firebasestorage.app", // Usando el valor correcto
+            storageBucket: "cumplekaty.firebasestorage.app",
             messagingSenderId: "139981760540",
             appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
@@ -269,27 +269,38 @@
             if(selectedPhotos.length !== 3) return;
             confirmVoteBtn.disabled = true;
             confirmVoteBtn.textContent = 'Procesando...';
+            
             try {
+                // ¡CORRECCIÓN! Se reestructura la transacción para cumplir la regla de "lecturas primero".
                 await runTransaction(db, async (transaction) => {
+                    // 1. FASE DE LECTURA: Lee todos los documentos primero.
                     const userDoc = await transaction.get(userRef);
+                    const statsRef = doc(db, "stats", "tally");
+                    const statsDoc = await transaction.get(statsRef);
+                    
+                    const photoRefs = selectedPhotos.map(id => doc(db, "photos", id));
+                    const photoDocs = await Promise.all(photoRefs.map(ref => transaction.get(ref)));
+
+                    // 2. FASE DE VALIDACIÓN: Revisa las condiciones después de leer.
                     if (!userDoc.exists() || userDoc.data().hasVoted) {
                         throw new Error("El usuario ya ha votado.");
                     }
-                    
-                    const statsRef = doc(db, "stats", "tally");
-                    const statsDoc = await transaction.get(statsRef);
-                    let newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
-
-                    for(const photoId of selectedPhotos) {
-                        const photoRef = doc(db, "photos", photoId);
-                        const photoDoc = await transaction.get(photoRef);
-                        if (!photoDoc.exists()) throw new Error(`La foto ${photoId} no existe.`);
-                        const newPhotoVotes = photoDoc.data().votes + 1;
-                        transaction.update(photoRef, { votes: newPhotoVotes });
+                    for (const photoDoc of photoDocs) {
+                        if (!photoDoc.exists()) {
+                            throw new Error(`Una de las fotos seleccionadas no existe.`);
+                        }
                     }
+
+                    // 3. FASE DE ESCRITURA: Ahora realiza todas las actualizaciones.
+                    const newTotalVotes = (statsDoc.exists() ? statsDoc.data().totalVotes : 0) + 3;
+                    transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
+
+                    photoDocs.forEach(photoDoc => {
+                        const newVotes = photoDoc.data().votes + 1;
+                        transaction.update(photoDoc.ref, { votes: newVotes });
+                    });
                     
                     transaction.update(userRef, { hasVoted: true });
-                    transaction.set(statsRef, { totalVotes: newTotalVotes }, { merge: true });
                 });
 
                 document.getElementById('thankYouModal').classList.add('flex');
@@ -297,12 +308,11 @@
                     document.getElementById('thankYouModal').classList.remove('flex');
                     voteSection.classList.add('hidden');
                     mainView.classList.remove('hidden');
-                    initializeUser(); // Refresca los datos del usuario por si acaso
                 }, 2500);
 
             } catch (e) {
                 console.error("Transacción de voto fallida: ", e.message);
-                confirmVoteBtn.textContent = 'Error: ' + e.message;
+                confirmVoteBtn.textContent = 'Error al votar. Intenta de nuevo.';
                 confirmVoteBtn.classList.remove('bg-green-500');
                 confirmVoteBtn.classList.add('bg-red-500', 'cursor-not-allowed');
                 setTimeout(() => {
