@@ -107,12 +107,13 @@
         import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-             apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
-  authDomain: "cumplekaty.firebaseapp.com",
-  projectId: "cumplekaty",
-  storageBucket: "cumplekaty.firebasestorage.app",
-  messagingSenderId: "139981760540",
-  appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
+            apiKey: "AIzaSyBr3w4YCV6v-DmEA9JYRlZX-uop9HEHdtw",
+            authDomain: "cumplekaty.firebaseapp.com",
+            projectId: "cumplekaty",
+            // ¡CORREGIDO! Asegúrate de que termine en .appspot.com
+            storageBucket: "cumplekaty.appspot.com",
+            messagingSenderId: "139981760540",
+            appId: "1:139981760540:web:68fcb641edf1cdfb91d7d9"
         };
 
         const app = initializeApp(firebaseConfig);
